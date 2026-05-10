@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Deutsches Vokabelheft - Read Only</title>
+  <title>Deutsches Vokabelheft - Read Only v6</title>
   <style>
     * { box-sizing: border-box; }
     body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#f8fafc; color:#0f172a; }
@@ -65,7 +65,8 @@
     th { background:#f1f5f9; color:#334155; font-weight:900; }
     tr:nth-child(even) td { background:#f8fafc; }
     tr:last-child td { border-bottom:0; }
-    .tense-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .tense-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    @media(max-width:1100px){ .tense-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
     @media(max-width:780px){ .tense-grid{grid-template-columns:1fr;} }
     .tense-card { background:#fff; border:1px solid #e2e8f0; border-radius:18px; padding:12px; }
     .tense-title { font-weight:900; font-style:italic; margin-bottom:8px; }
@@ -158,9 +159,9 @@ let prepositionOnly = false;
 
 const persons = [["ich","ich"],["du","du"],["er","er/sie/es"],["wir","wir"],["ihr","ihr"],["sie","sie/Sie"]];
 const imperativePersons = [["du","du"],["wir","wir"],["ihr","ihr"],["Sie","Sie"]];
-const tenseConfig = [
+const displayTenseConfig = [
   { key:"praesens", label:"Präsens", persons },
-  { key:"perfekt", label:"Perfekt", persons },
+  { key:"perfektAuto", label:"Perfekt", persons },
   { key:"praeteritum", label:"Präteritum", persons },
   { key:"konjunktiv1Praesens", label:"Konjunktiv I - Präsens", persons },
   { key:"konjunktiv2Praeteritum", label:"Konjunktiv II - Präteritum", persons },
@@ -195,6 +196,28 @@ function escapeHtml(value){
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;")
     .replaceAll('"',"&quot;");
+}
+
+
+function perfektAuxiliaryForms(auxiliary){
+  if(auxiliary === "sein"){
+    return { ich:"bin", du:"bist", er:"ist", wir:"sind", ihr:"seid", sie:"sind" };
+  }
+  return { ich:"habe", du:"hast", er:"hat", wir:"haben", ihr:"habt", sie:"haben" };
+}
+function reflexivePronouns(){
+  return { ich:"mich", du:"dich", er:"sich", wir:"uns", ihr:"euch", sie:"sich" };
+}
+function getDisplayConjugation(entry, tenseKey, personKey){
+  const conj = entry.conjugation || {};
+  if(tenseKey === "perfektAuto"){
+    const partizip = entry.partizipII || "";
+    if(!partizip) return "-";
+    const auxiliary = perfektAuxiliaryForms(entry.auxiliary || "haben")[personKey] || "";
+    const reflexive = entry.isReflexive ? (reflexivePronouns()[personKey] || "") + " " : "";
+    return `${auxiliary} ${reflexive}${partizip}`.trim();
+  }
+  return conj?.[tenseKey]?.[personKey] || "-";
 }
 
 function typeClass(type){
@@ -282,13 +305,12 @@ window.toggleOpen = function(id){
 };
 
 function renderConjugationTables(entry){
-  const conj = entry.conjugation || {};
   return `<div class="detail-block"><strong>Konjugation</strong><div class="tense-grid">${
-    tenseConfig.map(t => `
+    displayTenseConfig.map(t => `
       <div class="tense-card">
         <div class="tense-title">${t.label}</div>
         <table><tbody>
-          ${t.persons.map(([p,label]) => `<tr><td><strong>${label}</strong></td><td>${escapeHtml(conj?.[t.key]?.[p] || "-")}</td></tr>`).join("")}
+          ${t.persons.map(([p,label]) => `<tr><td><strong>${label}</strong></td><td>${escapeHtml(getDisplayConjugation(entry, t.key, p))}</td></tr>`).join("")}
         </tbody></table>
       </div>
     `).join("")
