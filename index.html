@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Deutsches Vokabelheft - Read Only v15</title>
+  <title>Deutsches Vokabelheft - Read Only v15.1</title>
   <style>
     * { box-sizing: border-box; }
     body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#f8fafc; color:#0f172a; }
@@ -1173,6 +1173,58 @@
     .conjugation-matrix tr:nth-child(even) td { background: #f8fbff !important; }
     .empty { background: #f8fbff !important; border-color: var(--admin-line) !important; color: var(--admin-muted) !important; }
 
+
+    /* Public v15.3: vertical prepositional example display */
+    .prep-block {
+      white-space: normal !important;
+      padding: 10px 12px !important;
+    }
+    .prep-block > strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+    .prep-list {
+      display: grid;
+      gap: 8px;
+    }
+    .prep-item.compact-prep-item {
+      margin: 0 !important;
+      padding: 10px 12px !important;
+      border-radius: 14px !important;
+      display: grid;
+      gap: 8px;
+    }
+    .prep-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .prep-head .badge {
+      margin: 0 !important;
+    }
+    .prep-meaning {
+      font-weight: 850;
+      color: #334155;
+    }
+    .prep-example-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .prep-line {
+      margin: 0 !important;
+      padding: 8px 10px;
+      border: 1px solid var(--line, #eadfce);
+      background: rgba(255,255,255,.72);
+      border-radius: 12px;
+      line-height: 1.35 !important;
+      color: #475569;
+    }
+    .prep-line strong {
+      color: #334155;
+    }
+
   </style>
 </head>
 <body>
@@ -1419,15 +1471,13 @@ function renderConjugationTables(entry){
 
 function renderPrepMeanings(entry){
   if(!entry.prepMeanings || entry.prepMeanings.length === 0) return "";
-  return `<div class="detail-block"><strong>Präpositionale Bedeutungen</strong>${
-    entry.prepMeanings.map(item => `
-      <div class="prep-item">
-        <span class="badge dark">${escapeHtml(item.preposition)} + ${escapeHtml(item.caseName)}</span>
-        <p><strong>Bedeutung:</strong> ${escapeHtml(item.meaning)}</p>
-        ${item.example ? `<p class="small"><strong>Beispiel:</strong> ${escapeHtml(item.example)}</p>` : ""}
-      </div>
-    `).join("")
-  }</div>`;
+  const items = entry.prepMeanings.map(item => {
+    const translation = item.exampleTranslation || item.example_translation || "";
+    const exampleBlock = item.example ? `<div class="prep-line"><strong>Beispiel:</strong> ${escapeHtml(item.example)}</div>` : "";
+    const translationBlock = translation ? `<div class="prep-line"><strong>Übersetzung:</strong> ${escapeHtml(translation)}</div>` : "";
+    return `<div class="prep-item compact-prep-item"><div class="prep-head"><span class="badge dark">${escapeHtml(item.preposition)} + ${escapeHtml(item.caseName)}</span><span class="prep-meaning"><strong>Bedeutung:</strong> ${escapeHtml(item.meaning)}</span></div>${(exampleBlock || translationBlock) ? `<div class="prep-example-grid">${exampleBlock}${translationBlock}</div>` : ""}</div>`;
+  }).join("");
+  return `<div class="detail-block prep-block"><strong>Präpositionale Bedeutungen</strong><div class="prep-list">${items}</div></div>`;
 }
 
 function render(){
@@ -1436,7 +1486,7 @@ function render(){
     if(typeFilter !== "all" && e.type !== typeFilter) return false;
     if(prepositionOnly && !(e.type==="verb" && e.prepMeanings && e.prepMeanings.length)) return false;
     if(!query) return true;
-    const prepText = (e.prepMeanings || []).map(p => `${p.preposition} ${p.caseName} ${p.meaning} ${p.example}`).join(" ");
+    const prepText = (e.prepMeanings || []).map(p => `${p.preposition} ${p.caseName} ${p.meaning} ${p.example} ${p.exampleTranslation || p.example_translation || ""}`).join(" ");
     const conjText = JSON.stringify(e.conjugation || {});
     return e.normalizedGerman.includes(query) ||
       e.german.toLowerCase().includes(query) ||
