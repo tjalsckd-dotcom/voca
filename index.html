@@ -1736,6 +1736,35 @@
       }
     }
 
+
+    /* Public v15.14: same grouped filter design as admin + multi-select filters */
+    .filter-panel {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin: 12px 0 18px;
+    }
+    .filter-panel .filter-row {
+      margin: 0 !important;
+      gap: 8px !important;
+      align-items: center;
+    }
+    .filter-verb-row {
+      display: none;
+      padding: 7px;
+      border: 1px solid var(--admin-line, #dbe3ef);
+      border-radius: 18px;
+      background: #f8fbff;
+    }
+    .filter-verb-row .pill {
+      padding: 8px 12px !important;
+      font-size: calc(14px * var(--ui-font-scale)) !important;
+    }
+    @media(max-width:700px){
+      .filter-verb-row { padding: 6px; }
+      .filter-panel .pill { padding: 8px 11px !important; }
+    }
+
   </style>
 </head>
 <body>
@@ -1768,21 +1797,25 @@
       <section class="card">
         <h2>Einträge</h2>
         <input id="search" placeholder="Deutsch, Bedeutung, Beispiel oder Tag suchen" />
-        <div class="filter-row">
-          <button class="pill active" data-filter="all" type="button">Alle</button>
-          <button class="pill" data-filter="verb" type="button">Verben</button>
-          <button class="pill" data-filter="noun" type="button">Nomen</button>
-          <button class="pill" data-filter="expression" type="button">Ausdrücke</button>
-          <button class="pill" data-filter="word" type="button">Wörter</button>
-          <button id="prepOnlyBtn" class="pill" type="button">Präpositionalverben</button>
-          <button class="pill active" data-verb-class="all" type="button">Alle Verbarten</button>
-          <button class="pill" data-verb-class="regelmäßig" type="button">regelmäßig</button>
-          <button class="pill" data-verb-class="unregelmäßig" type="button">unregelmäßig</button>
-          <button class="pill" data-verb-class="trennbar" type="button">trennbar</button>
-          <button class="pill" data-verb-class="untrennbar" type="button">untrennbar</button>
-          <button class="pill" data-verb-class="modal" type="button">modal</button>
+        <div class="filter-panel">
+          <div class="filter-row filter-main-row" aria-label="Wortart-Filter">
+            <button class="pill active" data-filter="all" type="button">Alle</button>
+            <button class="pill" data-filter="verb" type="button">Verben</button>
+            <button class="pill" data-filter="noun" type="button">Nomen</button>
+            <button class="pill" data-filter="expression" type="button">Ausdrücke</button>
+            <button class="pill" data-filter="word" type="button">Wörter</button>
+          </div>
+          <div id="verbFilterRow" class="filter-row filter-verb-row" aria-label="Verbarten-Filter">
+            <button id="prepOnlyBtn" class="pill" type="button">Präpositionalverben</button>
+            <button class="pill active" data-verb-class="all" type="button">Alle Verbarten</button>
+            <button class="pill" data-verb-class="regelmäßig" type="button">regelmäßig</button>
+            <button class="pill" data-verb-class="unregelmäßig" type="button">unregelmäßig</button>
+            <button class="pill" data-verb-class="trennbar" type="button">trennbar</button>
+            <button class="pill" data-verb-class="untrennbar" type="button">untrennbar</button>
+            <button class="pill" data-verb-class="modal" type="button">modal</button>
+          </div>
+          <div id="tagFilterRow" class="filter-row tag-filter-row" aria-label="Tag-Filter"></div>
         </div>
-        <div id="tagFilterRow" class="filter-row tag-filter-row" aria-label="Tag-Filter"></div>
         <div id="entries"></div>
       </section>
     
@@ -1827,8 +1860,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_wsBIHXSt2gZ1xN_1PndJVw_GF1q2hSB";
 
 let entries = [];
 let selectedModalId = null;
-let typeFilter = "all";
-let verbClassFilter = "all";
+let selectedTypeFilters = new Set();
+let selectedVerbClassFilters = new Set();
 let tagFilter = "all";
 let prepositionOnly = false;
 
@@ -1861,6 +1894,7 @@ const elements = {
   overviewModalSubtitle:$("overviewModalSubtitle"),
   overviewModalClose:$("overviewModalClose"),
   copyOverviewBtn:$("copyOverviewBtn"),
+  verbFilterRow:$("verbFilterRow"),
   tagFilterRow:$("tagFilterRow")
 };
 
@@ -2154,8 +2188,8 @@ function renderPrepMeanings(entry){
 function getFilteredEntries(){
   const query = normalizeGerman(elements.search.value);
   return entries.filter(e => {
-    if(typeFilter !== "all" && e.type !== typeFilter) return false;
-    if(verbClassFilter !== "all" && !(e.type === "verb" && e.verbClass === verbClassFilter)) return false;
+    if(selectedTypeFilters.size > 0 && !selectedTypeFilters.has(e.type)) return false;
+    if(selectedVerbClassFilters.size > 0 && !(e.type === "verb" && selectedVerbClassFilters.has(e.verbClass))) return false;
     if(prepositionOnly && !(e.type==="verb" && e.prepMeanings && e.prepMeanings.length)) return false;
     if(tagFilter !== "all" && !getEntryTags(e).includes(tagFilter)) return false;
     if(!query) return true;
@@ -2272,33 +2306,67 @@ async function copyOverviewList(){
   }
 }
 
+function isVerbFilterActive(){
+  return selectedTypeFilters.has("verb") || prepositionOnly;
+}
+
+function clearVerbSpecificFiltersIfNeeded(){
+  if(!selectedTypeFilters.has("verb")){
+    selectedVerbClassFilters.clear();
+    prepositionOnly = false;
+  }
+}
+
 function updateFilterButtonStates(){
   document.querySelectorAll("[data-filter]").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.filter === typeFilter);
+    const filter = btn.dataset.filter;
+    btn.classList.toggle("active", filter === "all" ? selectedTypeFilters.size === 0 : selectedTypeFilters.has(filter));
   });
 
+  if(elements.verbFilterRow){
+    elements.verbFilterRow.style.display = isVerbFilterActive() ? "flex" : "none";
+  }
+
   document.querySelectorAll("[data-verb-class]").forEach(btn => {
-    btn.classList.toggle("active", typeFilter === "verb" && btn.dataset.verbClass === verbClassFilter);
+    const cls = btn.dataset.verbClass;
+    btn.classList.toggle("active", cls === "all" ? selectedVerbClassFilters.size === 0 : selectedVerbClassFilters.has(cls));
   });
+
+  if(elements.prepOnlyBtn){
+    elements.prepOnlyBtn.classList.toggle("active", prepositionOnly);
+  }
 }
 
 document.querySelectorAll("[data-filter]").forEach(btn => btn.addEventListener("click", () => {
-  typeFilter = btn.dataset.filter;
-  verbClassFilter = "all";
+  const filter = btn.dataset.filter;
+  if(filter === "all"){
+    selectedTypeFilters.clear();
+    selectedVerbClassFilters.clear();
+    prepositionOnly = false;
+  } else {
+    selectedTypeFilters.has(filter) ? selectedTypeFilters.delete(filter) : selectedTypeFilters.add(filter);
+    clearVerbSpecificFiltersIfNeeded();
+  }
   updateFilterButtonStates();
   render();
 }));
 
 document.querySelectorAll("[data-verb-class]").forEach(btn => btn.addEventListener("click", () => {
-  typeFilter = "verb";
-  verbClassFilter = btn.dataset.verbClass;
+  const cls = btn.dataset.verbClass;
+  if(cls === "all"){
+    selectedVerbClassFilters.clear();
+  } else {
+    selectedVerbClassFilters.has(cls) ? selectedVerbClassFilters.delete(cls) : selectedVerbClassFilters.add(cls);
+    selectedTypeFilters.add("verb");
+  }
   updateFilterButtonStates();
   render();
 }));
 
 elements.prepOnlyBtn.addEventListener("click", () => {
   prepositionOnly = !prepositionOnly;
-  elements.prepOnlyBtn.classList.toggle("active", prepositionOnly);
+  if(prepositionOnly) selectedTypeFilters.add("verb");
+  updateFilterButtonStates();
   render();
 });
 
