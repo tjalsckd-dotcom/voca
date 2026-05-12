@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Deutsches Vokabelheft - Read Only v15.1</title>
+  <title>Deutsches Vokabelheft - Read Only v15.13 tags</title>
   <style>
     * { box-sizing: border-box; }
     body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#f8fafc; color:#0f172a; }
@@ -86,6 +86,10 @@
     .verb-separable { background:#ede9fe; color:#5b21b6; }
     .verb-inseparable { background:#e0e7ff; color:#3730a3; }
     .verb-modal { background:#fce7f3; color:#9d174d; }
+    .tag-badge { background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; cursor:pointer; }
+    .tag-badge:hover { background:#e0e7ff; }
+    .tag-badge-list { display:flex; flex-wrap:wrap; gap:4px; margin:4px 0; }
+    .tag-filter-row { margin-top:8px !important; }
     .hero-strip {
       height:8px;
       border-radius:999px;
@@ -1225,6 +1229,513 @@
       color: #334155;
     }
 
+  
+
+    /* Public v15.4: compact list + detail modal */
+    body.modal-open { overflow: hidden; }
+    .compact-entry { min-height: 0 !important; padding: 16px 18px !important; }
+    .compact-entry .entry-top { align-items: center !important; }
+    .compact-entry .entry-main-compact { align-items: center !important; }
+    .compact-entry .entry-content-column h3 { margin-bottom: 4px !important; }
+    .compact-entry .entry-content-column p,
+    .compact-entry .entry-content-column .small { margin: 2px 0 !important; }
+    .compact-entry .entry-right-meta { align-self: center; }
+    .detail-modal-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 100;
+      background: rgba(15, 23, 42, .46); backdrop-filter: blur(4px); padding: 24px;
+    }
+    .detail-modal-backdrop.open { display: flex; align-items: center; justify-content: center; }
+    .detail-modal {
+      width: min(1120px, 100%); max-height: min(88vh, 980px); overflow: auto;
+      background: var(--paper, #fffdf8); border: 1px solid var(--line, #e2e8f0);
+      border-radius: 28px; box-shadow: 0 30px 100px rgba(15, 23, 42, .28);
+    }
+    .detail-modal-header {
+      position: sticky; top: 0; z-index: 2; display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 16px; padding: 20px 22px 16px;
+      border-bottom: 1px solid var(--line, #e2e8f0);
+      background: rgba(255, 253, 248, .94); backdrop-filter: blur(8px);
+    }
+    .detail-modal-title { min-width: 0; }
+    .detail-modal-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .detail-modal-title h2 { margin: 0 !important; font-size: calc(28px * var(--ui-font-scale)) !important; line-height: 1.15; }
+    .detail-modal-subtitle { margin: 4px 0 0; color: #475569; line-height: 1.35; }
+    .detail-modal-close {
+      flex: 0 0 auto; width: 42px; height: 42px; border: 1px solid var(--line, #e2e8f0);
+      border-radius: 999px; background: rgba(255,255,255,.85); color: #0f172a;
+      font-size: 22px; font-weight: 900; cursor: pointer;
+    }
+    .detail-modal-close:hover { background: #fef2f2; color: #991b1b; }
+    .detail-modal-body { padding: 18px 22px 24px; }
+    .detail-modal-body .detail-block { white-space: normal !important; }
+    .detail-modal-body .info-grid { margin-bottom: 12px !important; }
+    .detail-modal-body .conjugation-block,
+    .detail-modal-body .prep-block { margin-top: 12px !important; }
+    @media(max-width: 720px){
+      .detail-modal-backdrop { padding: 0; }
+      .detail-modal { width: 100%; height: 100%; max-height: none; border-radius: 0; }
+      .detail-modal-header, .detail-modal-body { padding-left: 16px; padding-right: 16px; }
+      .compact-entry { padding: 14px !important; }
+      .compact-entry .entry-top { align-items: flex-start !important; }
+    }
+
+
+    /* Public v15.5: grid of small cards + detail modal */
+    #entries {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
+      gap: 12px !important;
+      align-items: stretch;
+    }
+
+    #entries .empty {
+      grid-column: 1 / -1;
+    }
+
+    .grid-entry-card {
+      min-height: 148px !important;
+      padding: 14px !important;
+      margin: 0 !important;
+      cursor: pointer;
+      display: flex !important;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .grid-entry-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(67,56,38,.10) !important;
+    }
+
+    .grid-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .grid-card-header .badge {
+      margin: 0 !important;
+      white-space: nowrap;
+    }
+
+    .grid-card-title {
+      margin: 0 0 6px 0 !important;
+      font-size: calc(21px * var(--ui-font-scale)) !important;
+      line-height: 1.12 !important;
+      letter-spacing: -.035em;
+      word-break: break-word;
+    }
+
+    .grid-card-meaning {
+      margin: 0 !important;
+      color: #475569 !important;
+      line-height: 1.35 !important;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .grid-card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .mini-chip {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      border: 1px solid var(--line, #e2e8f0);
+      background: rgba(255,255,255,.72);
+      color: #475569;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: calc(12px * var(--ui-font-scale));
+      font-weight: 900;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .grid-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .grid-card-open {
+      margin-left: auto;
+      border: 1px solid var(--line, #e2e8f0);
+      background: rgba(255,255,255,.78);
+      color: #334155;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-weight: 950;
+      font-size: calc(12px * var(--ui-font-scale));
+    }
+
+    @media(max-width: 560px){
+      #entries {
+        grid-template-columns: 1fr !important;
+      }
+      .grid-entry-card {
+        min-height: 132px !important;
+      }
+    }
+
+
+    /* Public v15.6: overview list button + compact wordlist modal */
+    .hero-overview-button {
+      position: absolute;
+      right: 34px;
+      top: 34px;
+      width: min(320px, 26vw);
+      min-height: 128px;
+      border: 1px solid var(--line, #e2e8f0);
+      border-radius: 28px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.86), rgba(248,250,252,.72)),
+        radial-gradient(circle at 30% 10%, rgba(59,130,246,.10), transparent 8rem);
+      box-shadow: var(--soft-shadow-sm, 0 5px 18px rgba(67, 56, 38, .06));
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px 22px;
+      cursor: pointer;
+      color: var(--ink, #172033);
+      text-align: left;
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+    .hero-overview-button:hover {
+      transform: translateY(-2px);
+      border-color: rgba(37,99,235,.38);
+      box-shadow: 0 16px 34px rgba(15,23,42,.10);
+    }
+    .hero-overview-kicker {
+      color: #2563eb;
+      font-size: calc(12px * var(--ui-font-scale));
+      font-weight: 950;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+    }
+    .hero-overview-title {
+      font-size: calc(24px * var(--ui-font-scale));
+      line-height: 1.05;
+      font-weight: 950;
+      letter-spacing: -.045em;
+    }
+    .hero-overview-sub {
+      color: #64748b;
+      font-size: calc(13px * var(--ui-font-scale));
+      font-weight: 800;
+      line-height: 1.25;
+    }
+    .overview-list-modal {
+      width: min(1180px, 100%);
+    }
+    .overview-modal-tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 10px;
+      color: #64748b;
+      font-weight: 800;
+    }
+    .overview-copy-btn {
+      border: 1px solid var(--line, #e2e8f0);
+      background: rgba(255,255,255,.84);
+      color: #334155;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+    .overview-copy-btn:hover { background: #fff; }
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 8px;
+    }
+    .overview-item {
+      border: 1px solid var(--line, #e2e8f0);
+      background: rgba(255,255,255,.74);
+      border-radius: 14px;
+      padding: 9px 10px;
+      cursor: pointer;
+      min-width: 0;
+      transition: transform .12s ease, background .12s ease;
+    }
+    .overview-item:hover {
+      transform: translateY(-1px);
+      background: #fff;
+    }
+    .overview-item-top {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      min-width: 0;
+    }
+    .overview-item-word {
+      font-weight: 950;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .overview-item-type {
+      flex: 0 0 auto;
+      color: #2563eb;
+      font-size: calc(11px * var(--ui-font-scale));
+      font-weight: 950;
+    }
+    .overview-item-meaning {
+      margin-top: 3px;
+      color: #64748b;
+      font-size: calc(13px * var(--ui-font-scale));
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @media(max-width: 920px){
+      .hero-overview-button {
+        position: static;
+        width: 100%;
+        min-height: 0;
+        margin-top: 16px;
+        border-radius: 22px;
+        padding: 16px;
+      }
+      .hero-overview-title { font-size: calc(20px * var(--ui-font-scale)); }
+    }
+    @media(max-width: 560px){
+      .overview-grid { grid-template-columns: 1fr; }
+    }
+
+
+    /* Public v15.8: restore 4-line main cards; keep Wortliste as a very simple list */
+    #entries {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fill, minmax(235px, 1fr)) !important;
+      gap: 12px !important;
+      align-items: stretch !important;
+    }
+
+    #entries .empty { grid-column: 1 / -1; }
+
+    #entries .grid-entry-card {
+      min-height: 148px !important;
+      padding: 14px !important;
+      margin: 0 !important;
+      cursor: pointer;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      gap: 10px !important;
+      border-radius: 22px !important;
+      box-shadow: var(--soft-shadow-sm, 0 5px 18px rgba(67,56,38,.06)) !important;
+    }
+
+    #entries .grid-entry-card:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 14px 28px rgba(67,56,38,.10) !important;
+    }
+
+    .overview-simple-list {
+      width: 100%;
+      border: 1px solid var(--line, #e2e8f0);
+      border-radius: 18px;
+      overflow: hidden;
+      background: rgba(255,255,255,.72);
+    }
+
+    .overview-simple-row {
+      display: grid;
+      grid-template-columns: 110px minmax(160px, 1fr) minmax(180px, 1.2fr);
+      gap: 12px;
+      align-items: center;
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid rgba(234,223,206,.78);
+      background: transparent;
+      color: inherit;
+      padding: 8px 12px;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .overview-simple-row:last-child { border-bottom: 0; }
+
+    .overview-simple-row:hover { background: rgba(255,255,255,.82); }
+
+    .overview-simple-type {
+      color: #2563eb;
+      font-size: calc(11px * var(--ui-font-scale));
+      font-weight: 950;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .overview-simple-word {
+      color: #0f172a;
+      font-weight: 950;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .overview-simple-meaning {
+      color: #64748b;
+      font-size: calc(13px * var(--ui-font-scale));
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media(max-width: 560px){
+      #entries { grid-template-columns: 1fr !important; }
+      #entries .grid-entry-card { min-height: 132px !important; }
+      .overview-simple-row {
+        grid-template-columns: 72px 1fr;
+        gap: 8px;
+      }
+      .overview-simple-meaning {
+        grid-column: 2;
+        font-size: calc(12px * var(--ui-font-scale));
+      }
+    }
+
+
+  
+
+    /* Public v15.10: Wortliste 5-column compact overview */
+    .overview-list-modal {
+      width: min(1420px, 100%) !important;
+    }
+
+    .overview-simple-list {
+      display: grid !important;
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+      gap: 8px !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      overflow: visible !important;
+      background: transparent !important;
+    }
+
+    .overview-simple-row {
+      display: grid !important;
+      grid-template-columns: 64px minmax(0, 1fr) !important;
+      grid-template-areas:
+        "type word"
+        "meaning meaning" !important;
+      gap: 4px 8px !important;
+      align-items: baseline !important;
+      min-height: 58px !important;
+      border: 1px solid rgba(234,223,206,.9) !important;
+      border-radius: 14px !important;
+      background: rgba(255,255,255,.72) !important;
+      padding: 8px 10px !important;
+    }
+
+    .overview-simple-row:last-child {
+      border-bottom: 1px solid rgba(234,223,206,.9) !important;
+    }
+
+    .overview-simple-row:hover {
+      background: #ffffff !important;
+      transform: translateY(-1px);
+    }
+
+    .overview-simple-type {
+      grid-area: type !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .overview-simple-word {
+      grid-area: word !important;
+      min-width: 0 !important;
+      font-weight: 950 !important;
+      color: #0f172a !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .overview-simple-meaning {
+      grid-area: meaning !important;
+      min-width: 0 !important;
+      color: #64748b !important;
+      font-size: calc(13px * var(--ui-font-scale)) !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+    }
+
+    @media(max-width: 1250px){
+      .overview-simple-list { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+    }
+
+    @media(max-width: 980px){
+      .overview-simple-list { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    }
+
+    @media(max-width: 760px){
+      .overview-simple-list { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    }
+
+    @media(max-width: 520px){
+      .overview-simple-list { grid-template-columns: 1fr !important; }
+    }
+
+
+    /* Public v15.12.12: colored Wortliste badges + article badge for nouns */
+    .overview-simple-row {
+      grid-template-columns: 96px minmax(0, 1fr) !important;
+    }
+    .overview-type-wrap {
+      grid-area: type !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+    }
+    .overview-type-wrap .badge {
+      margin: 0 !important;
+      padding: 3px 7px !important;
+      font-size: calc(10.5px * var(--ui-font-scale)) !important;
+      line-height: 1.05 !important;
+      white-space: nowrap !important;
+    }
+    .overview-article-badge {
+      padding-inline: 6px !important;
+      max-width: 38px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .overview-simple-type {
+      color: inherit !important;
+      text-transform: none !important;
+    }
+    @media(max-width: 520px){
+      .overview-simple-row {
+        grid-template-columns: 92px minmax(0, 1fr) !important;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -1233,6 +1744,11 @@
       <p class="subtitle">Deutsch Vokabelheft · Öffentlich</p>
       <h1>Deutsches Vokabelheft</h1>
       <p class="desc">Ein persönliches deutsches Wörterbuch für Verben, Nomen und Ausdrücke. Suche nach Deutsch, Bedeutung, Beispielen oder Präpositionen.</p>
+      <button id="openOverviewBtn" class="hero-overview-button" type="button" aria-label="Wortliste öffnen">
+        <span class="hero-overview-kicker">Übersicht</span>
+        <span class="hero-overview-title">Wortliste</span>
+        <span class="hero-overview-sub">Alle Treffer kompakt auf einen Blick</span>
+      </button>
       <div class="count">Einträge: <span id="entryCount">0</span></div><span id="syncStatus" class="sync-status">Supabase wird verbunden...</span><span class="readonly-note">Nur lesen</span><div class="font-controls" aria-label="Schriftgröße">
         <span class="font-controls-label">Schriftgröße</span>
         <button class="font-size-btn" type="button" data-font-scale="0.95">Klein</button>
@@ -1251,7 +1767,7 @@
     <main class="grid">
       <section class="card">
         <h2>Einträge</h2>
-        <input id="search" placeholder="Deutsch, Bedeutung, Beispiel suchen" />
+        <input id="search" placeholder="Deutsch, Bedeutung, Beispiel oder Tag suchen" />
         <div class="filter-row">
           <button class="pill active" data-filter="all" type="button">Alle</button>
           <button class="pill" data-filter="verb" type="button">Verben</button>
@@ -1259,11 +1775,50 @@
           <button class="pill" data-filter="expression" type="button">Ausdrücke</button>
           <button class="pill" data-filter="word" type="button">Wörter</button>
           <button id="prepOnlyBtn" class="pill" type="button">Präpositionalverben</button>
+          <button class="pill active" data-verb-class="all" type="button">Alle Verbarten</button>
+          <button class="pill" data-verb-class="regelmäßig" type="button">regelmäßig</button>
+          <button class="pill" data-verb-class="unregelmäßig" type="button">unregelmäßig</button>
+          <button class="pill" data-verb-class="trennbar" type="button">trennbar</button>
+          <button class="pill" data-verb-class="untrennbar" type="button">untrennbar</button>
+          <button class="pill" data-verb-class="modal" type="button">modal</button>
         </div>
+        <div id="tagFilterRow" class="filter-row tag-filter-row" aria-label="Tag-Filter"></div>
         <div id="entries"></div>
       </section>
     
     </main>
+  </div>
+
+
+
+  <div id="detailModalBackdrop" class="detail-modal-backdrop" aria-hidden="true">
+    <div id="detailModal" class="detail-modal" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
+      <div class="detail-modal-header">
+        <div id="detailModalHeader" class="detail-modal-title"></div>
+        <button id="detailModalClose" class="detail-modal-close" type="button" aria-label="Details schließen">×</button>
+      </div>
+      <div id="detailModalBody" class="detail-modal-body"></div>
+    </div>
+  </div>
+
+  <div id="overviewModalBackdrop" class="detail-modal-backdrop" aria-hidden="true">
+    <div id="overviewModal" class="detail-modal overview-list-modal" role="dialog" aria-modal="true" aria-labelledby="overviewModalTitle">
+      <div class="detail-modal-header">
+        <div class="detail-modal-title">
+          <div class="detail-modal-title-row">
+            <span class="badge dark">Übersicht</span>
+            <h2 id="overviewModalTitle">Wortliste</h2>
+          </div>
+          <p id="overviewModalSubtitle" class="detail-modal-subtitle"></p>
+          <div class="overview-modal-tools">
+            <button id="copyOverviewBtn" class="overview-copy-btn" type="button">Liste kopieren</button>
+            <span>Kompakte Liste der aktuellen Treffer.</span>
+          </div>
+        </div>
+        <button id="overviewModalClose" class="detail-modal-close" type="button" aria-label="Wortliste schließen">×</button>
+      </div>
+      <div id="overviewModalBody" class="detail-modal-body"></div>
+    </div>
   </div>
 
 <script>
@@ -1271,8 +1826,10 @@ const SUPABASE_URL = "https://lcigmqokdynxvxflarqt.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_wsBIHXSt2gZ1xN_1PndJVw_GF1q2hSB";
 
 let entries = [];
-let openId = null;
+let selectedModalId = null;
 let typeFilter = "all";
+let verbClassFilter = "all";
+let tagFilter = "all";
 let prepositionOnly = false;
 
 const persons = [["ich","ich"],["du","du"],["er","er/sie/es"],["wir","wir"],["ihr","ihr"],["sie","sie/Sie"]];
@@ -1292,7 +1849,19 @@ const elements = {
   heroSearch:$("heroSearch"),
   entryCount:$("entryCount"),
   prepOnlyBtn:$("prepOnlyBtn"),
-  syncStatus:$("syncStatus")
+  syncStatus:$("syncStatus"),
+  detailModalBackdrop:$("detailModalBackdrop"),
+  detailModal:$("detailModal"),
+  detailModalHeader:$("detailModalHeader"),
+  detailModalBody:$("detailModalBody"),
+  detailModalClose:$("detailModalClose"),
+  openOverviewBtn:$("openOverviewBtn"),
+  overviewModalBackdrop:$("overviewModalBackdrop"),
+  overviewModalBody:$("overviewModalBody"),
+  overviewModalSubtitle:$("overviewModalSubtitle"),
+  overviewModalClose:$("overviewModalClose"),
+  copyOverviewBtn:$("copyOverviewBtn"),
+  tagFilterRow:$("tagFilterRow")
 };
 
 function setStatus(message, isError=false){
@@ -1315,6 +1884,32 @@ function escapeHtml(value){
     .replaceAll(">","&gt;")
     .replaceAll('"',"&quot;");
 }
+
+function getEntryTags(entry){
+  return Array.isArray(entry.tags) ? entry.tags.filter(Boolean) : [];
+}
+
+function renderTagBadges(entry){
+  const tags = getEntryTags(entry);
+  if(!tags.length) return "";
+  return `<div class="tag-badge-list">${tags.map(tag => `<button type="button" class="badge tag-badge" onclick="event.stopPropagation(); setTagFilter(decodeURIComponent('${encodeURIComponent(tag)}'))">#${escapeHtml(tag)}</button>`).join("")}</div>`;
+}
+
+function renderTagFilterRow(){
+  if(!elements.tagFilterRow) return;
+  const tags = [...new Set(entries.flatMap(e => getEntryTags(e)))].sort((a,b) => a.localeCompare(b, "de"));
+  if(tags.length === 0){
+    elements.tagFilterRow.innerHTML = "";
+    return;
+  }
+  elements.tagFilterRow.innerHTML = `<button class="pill ${tagFilter === "all" ? "active" : ""}" type="button" onclick="setTagFilter('all')">Alle Tags</button>` +
+    tags.map(tag => `<button class="pill ${tagFilter === tag ? "active" : ""}" type="button" onclick="setTagFilter(decodeURIComponent('${encodeURIComponent(tag)}'))">#${escapeHtml(tag)}</button>`).join("");
+}
+
+window.setTagFilter = function(tag){
+  tagFilter = tag || "all";
+  render();
+};
 
 
 function perfektAuxiliaryForms(auxiliary){
@@ -1398,6 +1993,7 @@ function fromDb(row){
     exampleDe: row.example_de || "",
     exampleKo: row.example_translation || "",
     notes: row.notes || "",
+    tags: Array.isArray(row.tags) ? row.tags : [],
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -1418,9 +2014,84 @@ async function loadEntries(){
   }
 }
 
-window.toggleOpen = function(id){
-  openId = openId === id ? null : id;
-  render();
+function buildEntryTitle(entry){
+  if(entry.type === "noun"){
+    return `<span class="badge ${articleClass(entry.article)}">${escapeHtml(entry.article || "-")}</span> ${escapeHtml(entry.german)}`;
+  }
+  return escapeHtml(entry.german);
+}
+
+function buildEntryDetails(entry){
+  let details = "";
+
+  if(entry.type === "verb"){
+    details += `<div class="info-grid">
+      <div class="info"><div class="k">Infinitiv</div><div class="v">${escapeHtml(entry.infinitive || entry.german)}</div></div>
+      <div class="info"><div class="k">Partizip II</div><div class="v">${escapeHtml(entry.partizipII || "-")}</div></div>
+      <div class="info"><div class="k">Hilfsverb</div><div class="v">${escapeHtml(entry.auxiliary || "-")}</div></div>
+      <div class="info"><div class="k">Verbklasse</div><div class="v">${escapeHtml(entry.verbClass || "-")}</div></div>
+      <div class="info"><div class="k">reflexiv</div><div class="v">${entry.isReflexive ? "ja" : "nein"}</div></div>
+      <div class="info"><div class="k">Präpositionalverb</div><div class="v">${entry.isPrepositionalVerb || entry.prepMeanings?.length ? "ja" : "nein"}</div></div>
+    </div>` + renderConjugationTables(entry) + renderPrepMeanings(entry);
+  }
+
+  if(entry.type === "noun"){
+    details += `<div class="info-grid">
+      <div class="info"><div class="k">Artikel</div><div class="v">${escapeHtml(entry.article || "-")}</div></div>
+      <div class="info"><div class="k">Plural</div><div class="v">${escapeHtml(entry.plural || "-")}</div></div>
+    </div>`;
+  }
+
+  if(getEntryTags(entry).length){
+    details += `<div class="detail-block"><strong>Tags</strong><br>${renderTagBadges(entry)}</div>`;
+  }
+
+  if(entry.exampleDe || entry.exampleKo){
+    details += `<div class="detail-block"><strong>Beispiel</strong><br>${escapeHtml(entry.exampleDe)}<br><span class="small">${escapeHtml(entry.exampleKo)}</span></div>`;
+  }
+
+  if(entry.notes){
+    details += `<div class="detail-block"><strong>Notizen</strong><br>${escapeHtml(entry.notes)}</div>`;
+  }
+
+  return details || `<div class="empty">Keine weiteren Details.</div>`;
+}
+
+function renderDetailModal(entry){
+  if(!entry) return;
+  const prepSummary = entry.type === "verb" && entry.prepMeanings?.length ? `<span class="badge warn">${entry.prepMeanings.length} Präposition(en)</span>` : "";
+  const verbSummary = entry.type === "verb" ? `<p class="detail-modal-subtitle">Partizip II: ${escapeHtml(entry.partizipII || "-")} · ${escapeHtml(entry.auxiliary || "-")} · ${escapeHtml(entry.verbClass || "-")}</p>` : "";
+  const nounSummary = entry.type === "noun" ? `<p class="detail-modal-subtitle">Plural: ${escapeHtml(entry.plural || "-")}</p>` : "";
+  const tagSummary = renderTagBadges(entry);
+
+  elements.detailModalHeader.innerHTML = `
+    <div class="detail-modal-title-row">
+      <span class="badge ${typeClass(entry.type)}">${typeLabel(entry.type)}</span>
+      ${prepSummary}
+      ${tagSummary}
+      <h2 id="detailModalTitle">${buildEntryTitle(entry)}</h2>
+    </div>
+    <p class="detail-modal-subtitle"><strong>Bedeutung:</strong> ${escapeHtml(entry.meaningKo)}</p>
+    ${verbSummary}${nounSummary}
+  `;
+  elements.detailModalBody.innerHTML = buildEntryDetails(entry);
+}
+
+window.openDetailModal = function(id){
+  const entry = entries.find(e => String(e.id) === String(id));
+  if(!entry) return;
+  selectedModalId = id;
+  renderDetailModal(entry);
+  elements.detailModalBackdrop.classList.add("open");
+  elements.detailModalBackdrop.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+};
+
+window.closeDetailModal = function(){
+  selectedModalId = null;
+  elements.detailModalBackdrop.classList.remove("open");
+  elements.detailModalBackdrop.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
 };
 
 function renderConjugationTables(entry){
@@ -1480,24 +2151,35 @@ function renderPrepMeanings(entry){
   return `<div class="detail-block prep-block"><strong>Präpositionale Bedeutungen</strong><div class="prep-list">${items}</div></div>`;
 }
 
-function render(){
+function getFilteredEntries(){
   const query = normalizeGerman(elements.search.value);
-  const filtered = entries.filter(e => {
+  return entries.filter(e => {
     if(typeFilter !== "all" && e.type !== typeFilter) return false;
+    if(verbClassFilter !== "all" && !(e.type === "verb" && e.verbClass === verbClassFilter)) return false;
     if(prepositionOnly && !(e.type==="verb" && e.prepMeanings && e.prepMeanings.length)) return false;
+    if(tagFilter !== "all" && !getEntryTags(e).includes(tagFilter)) return false;
     if(!query) return true;
     const prepText = (e.prepMeanings || []).map(p => `${p.preposition} ${p.caseName} ${p.meaning} ${p.example} ${p.exampleTranslation || p.example_translation || ""}`).join(" ");
     const conjText = JSON.stringify(e.conjugation || {});
+    const perfektText = e.type === "verb" ? persons.map(([p]) => getDisplayConjugation(e, "perfektAuto", p)).join(" ") : "";
+    const tagText = getEntryTags(e).join(" ");
     return e.normalizedGerman.includes(query) ||
       e.german.toLowerCase().includes(query) ||
       e.meaningKo.toLowerCase().includes(query) ||
       (e.exampleDe||"").toLowerCase().includes(query) ||
       (e.exampleKo||"").toLowerCase().includes(query) ||
       prepText.toLowerCase().includes(query) ||
-      conjText.toLowerCase().includes(query);
+      conjText.toLowerCase().includes(query) ||
+      perfektText.toLowerCase().includes(query) ||
+      tagText.toLowerCase().includes(query);
   }).sort((a,b) => a.german.localeCompare(b.german,"de"));
+}
+
+function render(){
+  const filtered = getFilteredEntries();
 
   elements.entryCount.textContent = entries.length;
+  renderTagFilterRow();
 
   if(filtered.length === 0){
     elements.entries.innerHTML = '<div class="empty">Keine Einträge gefunden.</div>';
@@ -1505,69 +2187,112 @@ function render(){
   }
 
   elements.entries.innerHTML = filtered.map(e => {
-    const isOpen = openId === e.id;
-    const title = e.type==="noun" ? `<span class="badge ${articleClass(e.article)}">${escapeHtml(e.article)}</span> ${escapeHtml(e.german)}` : escapeHtml(e.german);
-    const prepSummary = e.type==="verb" && e.prepMeanings?.length ? `<span class="badge warn">${e.prepMeanings.length} Präposition(en)</span>` : "";
-    const extra = e.type==="verb"
-      ? `<p class="small">Partizip II: ${escapeHtml(e.partizipII || "-")} · ${escapeHtml(e.auxiliary || "-")} · <span class="badge ${verbClassClass(e.verbClass)}">${escapeHtml(e.verbClass || "-")}</span></p>`
-      : e.type==="noun" && e.plural
-        ? `<p class="small">Plural: ${escapeHtml(e.plural)}</p>`
+    const title = buildEntryTitle(e);
+    const prepSummary = e.type === "verb" && e.prepMeanings?.length ? `<span class="mini-chip">${e.prepMeanings.length} Präp.</span>` : "";
+    const tagBadges = renderTagBadges(e);
+    const meta = e.type === "verb"
+      ? `<span class="mini-chip">Partizip II: ${escapeHtml(e.partizipII || "-")}</span><span class="mini-chip">${escapeHtml(e.auxiliary || "-")}</span><span class="badge ${verbClassClass(e.verbClass)}">${escapeHtml(e.verbClass || "-")}</span>${prepSummary}`
+      : e.type === "noun"
+        ? `${e.plural ? `<span class="mini-chip">Plural: ${escapeHtml(e.plural)}</span>` : ""}`
         : "";
 
-    let details = "";
-
-    if(isOpen){
-      if(e.type==="verb"){
-        details += `<div class="info-grid">
-          <div class="info"><div class="k">Infinitiv</div><div class="v">${escapeHtml(e.infinitive || e.german)}</div></div>
-          <div class="info"><div class="k">Partizip II</div><div class="v">${escapeHtml(e.partizipII || "-")}</div></div>
-          <div class="info"><div class="k">Hilfsverb</div><div class="v">${escapeHtml(e.auxiliary || "-")}</div></div>
-          <div class="info"><div class="k">Verbklasse</div><div class="v">${escapeHtml(e.verbClass || "-")}</div></div>
-          <div class="info"><div class="k">reflexiv</div><div class="v">${e.isReflexive ? "ja" : "nein"}</div></div>
-          <div class="info"><div class="k">Präpositionalverb</div><div class="v">${e.isPrepositionalVerb || e.prepMeanings?.length ? "ja" : "nein"}</div></div>
-        </div>` + renderConjugationTables(e) + renderPrepMeanings(e);
-      }
-
-      if(e.type==="noun"){
-        details += `<div class="info-grid">
-          <div class="info"><div class="k">Artikel</div><div class="v">${escapeHtml(e.article || "-")}</div></div>
-          <div class="info"><div class="k">Plural</div><div class="v">${escapeHtml(e.plural || "-")}</div></div>
-        </div>`;
-      }
-
-      if(e.exampleDe || e.exampleKo){
-        details += `<div class="detail-block"><strong>Beispiel</strong><br>${escapeHtml(e.exampleDe)}<br><span class="small">${escapeHtml(e.exampleKo)}</span></div>`;
-      }
-
-      if(e.notes){
-        details += `<div class="detail-block"><strong>Notizen</strong><br>${escapeHtml(e.notes)}</div>`;
-      }
-
-      details = `<div class="details">${details}</div>`;
-    }
-
-    return `<article class="entry colored-card ${cardClass(e.type)}">
-      <div class="entry-top">
-        <div class="entry-main entry-main-compact" onclick="toggleOpen('${e.id}')">
-          <div class="entry-type-column"><span class="badge ${typeClass(e.type)}">${typeLabel(e.type)}</span></div>
-          <div class="entry-content-column">${prepSummary}
-          <h3>${title}</h3>
-          <p>Bedeutung: ${escapeHtml(e.meaningKo)}</p>
-          ${extra}
-          </div>
+    return `<article class="entry grid-entry-card colored-card ${cardClass(e.type)}" onclick="openDetailModal('${e.id}')" title="Details öffnen">
+      <div>
+        <div class="grid-card-header">
+          <span class="badge ${typeClass(e.type)}">${typeLabel(e.type)}</span>
+          ${e.type === "verb" && e.auxiliary ? `<span class="mini-chip">${escapeHtml(e.auxiliary)}</span>` : e.type === "noun" && e.article ? `<span class="badge ${articleClass(e.article)}">${escapeHtml(e.article)}</span>` : ""}
         </div>
-        <div class="entry-right-meta">${e.type === "verb" ? escapeHtml(e.auxiliary || "") : e.type === "noun" ? escapeHtml(e.plural || "") : ""}</div>
-        <div>
-          <button class="icon-btn" onclick="event.stopPropagation(); toggleOpen('${e.id}')" title="Details">${isOpen ? "⌃" : "⌄"}</button>
-        </div>
-      </div>${details}</article>`;
+        <h3 class="grid-card-title">${title}</h3>
+        <p class="grid-card-meaning"><strong>Bedeutung:</strong> ${escapeHtml(e.meaningKo || "-")}</p>
+        ${tagBadges}
+      </div>
+      <div class="grid-card-footer">
+        <div class="grid-card-meta">${meta}</div>
+        <span class="grid-card-open">Details</span>
+      </div>
+    </article>`;
   }).join("");
+}
+
+function buildOverviewText(list){
+  return list.map(e => {
+    const tags = getEntryTags(e).length ? ` #${getEntryTags(e).join(" #")}` : "";
+    return `${typeLabel(e.type)} - ${e.german} - ${e.meaningKo || "-"}${tags}`;
+  }).join("\n");
+}
+
+function renderOverviewModal(){
+  const list = getFilteredEntries();
+  elements.overviewModalSubtitle.textContent = `${list.length} Treffer von ${entries.length} Einträgen`;
+  if(list.length === 0){
+    elements.overviewModalBody.innerHTML = '<div class="empty">Keine Einträge gefunden.</div>';
+    return;
+  }
+
+  elements.overviewModalBody.innerHTML = `<div class="overview-simple-list">${list.map(e => {
+    const articleBadge = e.type === "noun" && e.article ? `<span class="badge ${articleClass(e.article)} overview-article-badge">${escapeHtml(e.article)}</span>` : "";
+    const tagText = getEntryTags(e).length ? ` #${getEntryTags(e).join(" #")}` : "";
+    return `<button class="overview-simple-row" type="button" onclick="openDetailFromOverview('${e.id}')">
+      <span class="overview-type-wrap"><span class="badge ${typeClass(e.type)} overview-simple-type">${typeLabel(e.type)}</span>${articleBadge}</span>
+      <span class="overview-simple-word">${escapeHtml(e.german || "-")}</span>
+      <span class="overview-simple-meaning">${escapeHtml((e.meaningKo || "-") + tagText)}</span>
+    </button>`;
+  }).join("")}</div>`;
+}
+
+function openOverviewModal(){
+  renderOverviewModal();
+  elements.overviewModalBackdrop.classList.add("open");
+  elements.overviewModalBackdrop.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+}
+
+function closeOverviewModal(){
+  elements.overviewModalBackdrop.classList.remove("open");
+  elements.overviewModalBackdrop.setAttribute("aria-hidden", "true");
+  if(!elements.detailModalBackdrop.classList.contains("open")){
+    document.body.classList.remove("modal-open");
+  }
+}
+
+window.openDetailFromOverview = function(id){
+  closeOverviewModal();
+  openDetailModal(id);
+};
+
+async function copyOverviewList(){
+  const list = getFilteredEntries();
+  const text = buildOverviewText(list);
+  try{
+    await navigator.clipboard.writeText(text);
+    elements.copyOverviewBtn.textContent = "Kopiert";
+    window.setTimeout(() => elements.copyOverviewBtn.textContent = "Liste kopieren", 1200);
+  } catch(error){
+    window.prompt("Liste kopieren:", text);
+  }
+}
+
+function updateFilterButtonStates(){
+  document.querySelectorAll("[data-filter]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.filter === typeFilter);
+  });
+
+  document.querySelectorAll("[data-verb-class]").forEach(btn => {
+    btn.classList.toggle("active", typeFilter === "verb" && btn.dataset.verbClass === verbClassFilter);
+  });
 }
 
 document.querySelectorAll("[data-filter]").forEach(btn => btn.addEventListener("click", () => {
   typeFilter = btn.dataset.filter;
-  document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
+  verbClassFilter = "all";
+  updateFilterButtonStates();
+  render();
+}));
+
+document.querySelectorAll("[data-verb-class]").forEach(btn => btn.addEventListener("click", () => {
+  typeFilter = "verb";
+  verbClassFilter = btn.dataset.verbClass;
+  updateFilterButtonStates();
   render();
 }));
 
@@ -1601,7 +2326,24 @@ function initFontControls(){
   });
 }
 
+elements.detailModalClose.addEventListener("click", closeDetailModal);
+elements.detailModalBackdrop.addEventListener("click", (event) => {
+  if(event.target === elements.detailModalBackdrop) closeDetailModal();
+});
+elements.openOverviewBtn.addEventListener("click", openOverviewModal);
+elements.overviewModalClose.addEventListener("click", closeOverviewModal);
+elements.overviewModalBackdrop.addEventListener("click", (event) => {
+  if(event.target === elements.overviewModalBackdrop) closeOverviewModal();
+});
+elements.copyOverviewBtn.addEventListener("click", copyOverviewList);
+document.addEventListener("keydown", (event) => {
+  if(event.key !== "Escape") return;
+  if(elements.overviewModalBackdrop.classList.contains("open")) closeOverviewModal();
+  else if(elements.detailModalBackdrop.classList.contains("open")) closeDetailModal();
+});
+
 initFontControls();
+updateFilterButtonStates();
 loadEntries();
 </script>
 </body>
