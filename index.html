@@ -77,6 +77,7 @@
     .type-verb { background:#dbeafe; color:#1e40af; }
     .type-noun { background:#dcfce7; color:#166534; }
     .type-expression { background:#fef3c7; color:#92400e; }
+    .type-redemittel { background:#ccfbf1; color:#115e59; }
     .type-word { background:#f3e8ff; color:#6b21a8; }
     .article-der { background:#dbeafe; color:#1e40af; }
     .article-die { background:#fee2e2; color:#991b1b; }
@@ -116,11 +117,13 @@
     .section-title-verb { border-left:6px solid #60a5fa; }
     .section-title-noun { border-left:6px solid #22c55e; }
     .section-title-expression { border-left:6px solid #f59e0b; }
+    .section-title-redemittel { border-left:6px solid #14b8a6; }
     .section-title-word { border-left:6px solid #a855f7; }
     .colored-card { border-top:6px solid #e2e8f0; }
     .colored-card.verb-card { border-top-color:#60a5fa; }
     .colored-card.noun-card { border-top-color:#22c55e; }
     .colored-card.expression-card { border-top-color:#f59e0b; }
+    .colored-card.redemittel-card { border-top-color:#14b8a6; }
     .colored-card.word-card { border-top-color:#a855f7; }
 
   
@@ -685,6 +688,7 @@
       --verb: #3b82f6;
       --noun: #22c55e;
       --expr: #f59e0b;
+      --redemittel: #14b8a6;
       --word: #8b5cf6;
     }
 
@@ -722,7 +726,7 @@
       width: 72px;
       height: 6px;
       border-radius: 999px;
-      background: linear-gradient(90deg, var(--verb), var(--noun), var(--expr), var(--word));
+      background: linear-gradient(90deg, var(--verb), var(--noun), var(--expr), var(--redemittel), var(--word));
       opacity: .85;
     }
 
@@ -885,6 +889,7 @@
     .verb-card { border-top-color: var(--verb) !important; }
     .noun-card { border-top-color: var(--noun) !important; }
     .expression-card { border-top-color: var(--expr) !important; }
+    .redemittel-card { border-top-color: var(--redemittel) !important; }
     .word-card { border-top-color: var(--word) !important; }
 
     .badge {
@@ -897,6 +902,7 @@
     .type-verb { background: #eaf2ff !important; color: #1d4ed8 !important; }
     .type-noun { background: #eafaf0 !important; color: #15803d !important; }
     .type-expression { background: #fff5db !important; color: #a16207 !important; }
+    .type-redemittel { background: #ccfbf1 !important; color: #115e59 !important; }
     .type-word { background: #f4edff !important; color: #6d28d9 !important; }
 
     .article-der { background: #eaf2ff !important; color: #1d4ed8 !important; }
@@ -1140,6 +1146,7 @@
     .type-verb { background: #eaf2ff !important; color: #1d4ed8 !important; }
     .type-noun { background: #eafaf0 !important; color: #15803d !important; }
     .type-expression { background: #fff7df !important; color: #a16207 !important; }
+    .type-redemittel { background: #ccfbf1 !important; color: #115e59 !important; }
     .type-word { background: #f4edff !important; color: #6d28d9 !important; }
 
     .icon-btn {
@@ -1803,6 +1810,7 @@
             <button class="pill" data-filter="verb" type="button">Verben</button>
             <button class="pill" data-filter="noun" type="button">Nomen</button>
             <button class="pill" data-filter="expression" type="button">Ausdrücke</button>
+            <button class="pill" data-filter="redemittel" type="button">Redemittel</button>
             <button class="pill" data-filter="word" type="button">Wörter</button>
           </div>
           <div id="verbFilterRow" class="filter-row filter-verb-row" aria-label="Verbarten-Filter">
@@ -1862,7 +1870,7 @@ let entries = [];
 let selectedModalId = null;
 let selectedTypeFilters = new Set();
 let selectedVerbClassFilters = new Set();
-let tagFilter = "all";
+let selectedTagFilters = new Set();
 let prepositionOnly = false;
 
 const persons = [["ich","ich"],["du","du"],["er","er/sie/es"],["wir","wir"],["ihr","ihr"],["sie","sie/Sie"]];
@@ -1908,7 +1916,7 @@ function normalizeGerman(value){
 }
 
 function typeLabel(type){
-  return type==="verb" ? "Verb" : type==="noun" ? "Nomen" : type==="expression" ? "Ausdruck" : "Wort";
+  return type==="verb" ? "Verb" : type==="noun" ? "Nomen" : type==="expression" ? "Ausdruck" : type==="redemittel" ? "Redemittel" : "Wort";
 }
 
 function escapeHtml(value){
@@ -1919,32 +1927,108 @@ function escapeHtml(value){
     .replaceAll('"',"&quot;");
 }
 
+function normalizeTag(rawTag){
+  const trimmed = String(rawTag || "").trim().replace(/\s+/g, " ");
+  if(!trimmed) return "";
+  // Alte gruppierte Tags aus der vorherigen Version werden flach angezeigt.
+  const legacyMatch = trimmed.match(/^(level|topic|grammar|status|source):(.+)$/i);
+  if(legacyMatch) return legacyMatch[2].trim().replace(/\s+/g, " ");
+  return trimmed;
+}
+
+function parseTags(value){
+  const seen = new Set();
+  return String(value || "")
+    .split(",")
+    .map(normalizeTag)
+    .filter(Boolean)
+    .filter(tag => {
+      const key = tag.toLowerCase();
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
 function getEntryTags(entry){
-  return Array.isArray(entry.tags) ? entry.tags.filter(Boolean) : [];
+  if(!Array.isArray(entry.tags)) return [];
+  const seen = new Set();
+  return entry.tags
+    .map(normalizeTag)
+    .filter(Boolean)
+    .filter(tag => {
+      const key = tag.toLowerCase();
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+function tagDisplayLabel(tag){
+  return normalizeTag(tag);
 }
 
 function renderTagBadges(entry){
   const tags = getEntryTags(entry);
   if(!tags.length) return "";
-  return `<div class="tag-badge-list">${tags.map(tag => `<button type="button" class="badge tag-badge" onclick="event.stopPropagation(); setTagFilter(decodeURIComponent('${encodeURIComponent(tag)}'))">#${escapeHtml(tag)}</button>`).join("")}</div>`;
+  return `<div class="tag-badge-list">${tags.map(tag => `<button type="button" class="badge tag-badge" title="${escapeHtml(tag)}" onclick="event.stopPropagation(); toggleTagFilter(decodeURIComponent('${encodeURIComponent(tag)}'))">#${escapeHtml(tagDisplayLabel(tag))}</button>`).join("")}</div>`;
 }
 
 function renderTagFilterRow(){
   if(!elements.tagFilterRow) return;
-  const tags = [...new Set(entries.flatMap(e => getEntryTags(e)))].sort((a,b) => a.localeCompare(b, "de"));
+  const tags = [...new Set(entries.flatMap(e => getEntryTags(e)))].sort((a,b) => a.localeCompare(b, "ko"));
   if(tags.length === 0){
     elements.tagFilterRow.innerHTML = "";
     return;
   }
-  elements.tagFilterRow.innerHTML = `<button class="pill ${tagFilter === "all" ? "active" : ""}" type="button" onclick="setTagFilter('all')">Alle Tags</button>` +
-    tags.map(tag => `<button class="pill ${tagFilter === tag ? "active" : ""}" type="button" onclick="setTagFilter(decodeURIComponent('${encodeURIComponent(tag)}'))">#${escapeHtml(tag)}</button>`).join("");
+  elements.tagFilterRow.innerHTML = `<div class="tag-helper">Mehrere Tags können ausgewählt werden. Es werden nur Einträge mit allen gewählten Tags angezeigt.</div><div class="tag-filter-groups"><div class="tag-filter-group"><button class="pill ${selectedTagFilters.size === 0 ? "active" : ""}" type="button" onclick="clearTagFilters()">Alle Tags</button>${tags.map(tag => `<button class="pill ${selectedTagFilters.has(tag) ? "active" : ""}" type="button" title="${escapeHtml(tag)}" onclick="toggleTagFilter(decodeURIComponent('${encodeURIComponent(tag)}'))">#${escapeHtml(tagDisplayLabel(tag))}</button>`).join("")}</div></div>`;
 }
 
-window.setTagFilter = function(tag){
-  tagFilter = tag || "all";
+window.toggleTagFilter = function(tag){
+  const normalized = normalizeTag(tag);
+  if(!normalized) return;
+  selectedTagFilters.has(normalized) ? selectedTagFilters.delete(normalized) : selectedTagFilters.add(normalized);
   render();
 };
 
+window.clearTagFilters = function(){
+  selectedTagFilters.clear();
+  render();
+};
+
+window.setTagFilter = function(tag){
+  selectedTagFilters.clear();
+  const normalized = normalizeTag(tag);
+  if(normalized && normalized !== "all") selectedTagFilters.add(normalized);
+  render();
+};
+
+function setTagsInput(tags){
+  if(!elements.tags) return;
+  elements.tags.value = parseTags(tags.join(", ")).join(", ");
+}
+
+function addTagsToInput(tags){
+  const current = elements.tags ? parseTags(elements.tags.value) : [];
+  const seen = new Set(current.map(tag => tag.toLowerCase()));
+  tags.map(normalizeTag).filter(Boolean).forEach(tag => {
+    const key = tag.toLowerCase();
+    if(!seen.has(key)){
+      current.push(tag);
+      seen.add(key);
+    }
+  });
+  setTagsInput(current);
+}
+
+window.addRecommendedTag = function(tag){ addTagsToInput([tag]); };
+window.addAutoRecommendedTags = function(){};
+
+function renderTagRecommendationTools(){
+  const box = document.getElementById("tagRecommendationBox");
+  if(!box) return;
+  box.innerHTML = "";
+}
 
 function perfektAuxiliaryForms(auxiliary){
   if(auxiliary === "sein"){
@@ -1968,7 +2052,7 @@ function getDisplayConjugation(entry, tenseKey, personKey){
 }
 
 function typeClass(type){
-  return type==="verb" ? "type-verb" : type==="noun" ? "type-noun" : type==="expression" ? "type-expression" : "type-word";
+  return type==="verb" ? "type-verb" : type==="noun" ? "type-noun" : type==="expression" ? "type-expression" : type==="redemittel" ? "type-redemittel" : "type-word";
 }
 
 function articleClass(article){
@@ -1985,7 +2069,7 @@ function verbClassClass(value){
 }
 
 function cardClass(type){
-  return type==="verb" ? "verb-card" : type==="noun" ? "noun-card" : type==="expression" ? "expression-card" : "word-card";
+  return type==="verb" ? "verb-card" : type==="noun" ? "noun-card" : type==="expression" ? "expression-card" : type==="redemittel" ? "redemittel-card" : "word-card";
 }
 
 async function supabaseRequest(path){
@@ -2191,7 +2275,7 @@ function getFilteredEntries(){
     if(selectedTypeFilters.size > 0 && !selectedTypeFilters.has(e.type)) return false;
     if(selectedVerbClassFilters.size > 0 && !(e.type === "verb" && selectedVerbClassFilters.has(e.verbClass))) return false;
     if(prepositionOnly && !(e.type==="verb" && e.prepMeanings && e.prepMeanings.length)) return false;
-    if(tagFilter !== "all" && !getEntryTags(e).includes(tagFilter)) return false;
+    if(selectedTagFilters.size > 0 && ![...selectedTagFilters].every(tag => getEntryTags(e).includes(tag))) return false;
     if(!query) return true;
     const prepText = (e.prepMeanings || []).map(p => `${p.preposition} ${p.caseName} ${p.meaning} ${p.example} ${p.exampleTranslation || p.example_translation || ""}`).join(" ");
     const conjText = JSON.stringify(e.conjugation || {});
