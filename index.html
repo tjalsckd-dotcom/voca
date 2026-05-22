@@ -1879,7 +1879,6 @@ const displayTenseConfig = [
   { key:"praesens", label:"Präsens", persons },
   { key:"perfektAuto", label:"Perfekt", persons },
   { key:"praeteritum", label:"Präteritum", persons },
-  { key:"konjunktiv2Praeteritum", label:"Konjunktiv II - Präteritum", persons },
   { key:"imperativ", label:"Imperativ", persons:imperativePersons }
 ];
 
@@ -2217,8 +2216,7 @@ function renderConjugationTables(entry){
   const tenseColumns = [
     { key:"praesens", label:"Präsens" },
     { key:"perfektAuto", label:"Perfekt" },
-    { key:"praeteritum", label:"Präteritum" },
-    { key:"konjunktiv2Praeteritum", label:"Konj. II" }
+    { key:"praeteritum", label:"Präteritum" }
   ];
 
   const mainTable = `<table class="conjugation-matrix">
