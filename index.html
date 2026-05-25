@@ -1772,6 +1772,270 @@
       .filter-panel .pill { padding: 8px 11px !important; }
     }
 
+  
+
+    /* Quick Wortliste grouping controls */
+    .overview-sort-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border: 1px solid var(--admin-line, #e2e8f0);
+      background: rgba(255,255,255,.72);
+      border-radius: 999px;
+      font-weight: 900;
+      color: #475569;
+      white-space: nowrap;
+    }
+    .overview-sort-control select {
+      width: auto !important;
+      min-width: 150px;
+      border-radius: 999px !important;
+      padding: 7px 28px 7px 10px !important;
+      font-weight: 900;
+      background: #fff !important;
+    }
+    .overview-grouped-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+    .overview-group-box {
+      break-inside: avoid;
+      border: 1px solid var(--admin-line, #e2e8f0);
+      background: rgba(255,255,255,.66);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 5px 16px rgba(15,23,42,.05);
+    }
+    .overview-group-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      padding: 7px 9px;
+      background: rgba(248,250,252,.88);
+      border-bottom: 1px solid var(--admin-line, #e2e8f0);
+      font-size: 15px !important;
+      font-weight: 950;
+      letter-spacing: -.02em;
+    }
+    .overview-group-title .count-badge {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 950;
+    }
+    .overview-group-box .overview-simple-list {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 0 !important;
+      margin: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+    @media(max-width:1100px){ .overview-grouped-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media(max-width:720px){ .overview-grouped-list { grid-template-columns: 1fr; } .overview-sort-control { width:100%; justify-content:space-between; } }
+
+
+    /* Public v15.22: Excel-like Wortliste table + CSV export */
+    .overview-table-mode-btn.active {
+      background: #0f172a !important;
+      color: #fff !important;
+      border-color: #0f172a !important;
+    }
+    .overview-export-hint {
+      width: 100%;
+      color: #64748b;
+      font-size: calc(13px * var(--ui-font-scale));
+      font-weight: 800;
+    }
+    .overview-table-wrap {
+      width: 100%;
+      overflow: auto;
+      border: 1px solid var(--line, #e2e8f0);
+      border-radius: 18px;
+      background: rgba(255,255,255,.72);
+      box-shadow: 0 5px 16px rgba(15,23,42,.05);
+    }
+    .overview-excel-table {
+      width: 100%;
+      min-width: 1120px;
+      border-collapse: collapse;
+      margin: 0 !important;
+      background: #fff;
+      table-layout: fixed;
+    }
+    .overview-excel-table th,
+    .overview-excel-table td {
+      border: 1px solid rgba(203,213,225,.95) !important;
+      padding: 7px 9px !important;
+      vertical-align: top;
+      text-align: left;
+      font-size: calc(13px * var(--ui-font-scale)) !important;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .overview-excel-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #eef2f7 !important;
+      color: #0f172a !important;
+      font-weight: 950;
+    }
+    .overview-excel-table tbody tr:nth-child(even) td {
+      background: #f8fafc !important;
+    }
+    .overview-excel-table tbody tr:hover td {
+      background: #eff6ff !important;
+      cursor: pointer;
+    }
+    .overview-excel-table .col-group { width: 150px; }
+    .overview-excel-table .col-type { width: 105px; }
+    .overview-excel-table .col-article { width: 78px; }
+    .overview-excel-table .col-word { width: 190px; font-weight: 950; }
+    .overview-excel-table .col-meaning { width: 230px; }
+    .overview-excel-table .col-tags { width: 220px; }
+    .overview-excel-table .col-small { width: 120px; }
+    .overview-excel-table .col-example { width: 260px; }
+
+
+    /* Public v15.23: tag-based mini tables with different colors */
+    .overview-tag-table-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+    .overview-tag-table-card {
+      --tag-accent: #3b82f6;
+      --tag-soft: #eff6ff;
+      break-inside: avoid;
+      border: 1px solid color-mix(in srgb, var(--tag-accent) 28%, #e2e8f0);
+      background: rgba(255,255,255,.82);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 5px 14px rgba(15,23,42,.05);
+    }
+    .overview-tag-table-card:nth-child(6n+1) { --tag-accent:#3b82f6; --tag-soft:#eff6ff; }
+    .overview-tag-table-card:nth-child(6n+2) { --tag-accent:#22c55e; --tag-soft:#f0fdf4; }
+    .overview-tag-table-card:nth-child(6n+3) { --tag-accent:#f59e0b; --tag-soft:#fffbeb; }
+    .overview-tag-table-card:nth-child(6n+4) { --tag-accent:#8b5cf6; --tag-soft:#f5f3ff; }
+    .overview-tag-table-card:nth-child(6n+5) { --tag-accent:#ec4899; --tag-soft:#fdf2f8; }
+    .overview-tag-table-card:nth-child(6n+6) { --tag-accent:#14b8a6; --tag-soft:#f0fdfa; }
+    .overview-tag-table-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      padding: 10px 12px;
+      background: linear-gradient(90deg, var(--tag-soft), rgba(255,255,255,.92));
+      border-bottom: 2px solid color-mix(in srgb, var(--tag-accent) 42%, #e2e8f0);
+      font-size: 13.5px !important;
+      font-weight: 950;
+      letter-spacing: -.02em;
+      color: #0f172a;
+    }
+    .overview-tag-table-title .tag-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--tag-accent);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--tag-accent) 16%, transparent);
+      flex: 0 0 auto;
+    }
+    .overview-tag-table-title .tag-title-text {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .overview-tag-table-title .count-badge {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: var(--tag-accent);
+      color: white;
+      font-size: 12px;
+      font-weight: 950;
+    }
+    .overview-tag-mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin: 0 !important;
+      background: white;
+    }
+    .overview-tag-mini-table th,
+    .overview-tag-mini-table td {
+      border-bottom: 1px solid rgba(226,232,240,.95) !important;
+      padding: 4px 7px !important;
+      text-align: left;
+      vertical-align: top;
+      font-size: calc(12.5px * var(--ui-font-scale)) !important;
+      line-height: 1.16;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .overview-tag-mini-table th {
+      background: color-mix(in srgb, var(--tag-soft) 74%, #ffffff);
+      color: #334155;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+    .overview-tag-mini-table tr:last-child td { border-bottom: 0 !important; }
+    .overview-tag-mini-table tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--tag-soft) 36%, #ffffff); }
+    .overview-tag-mini-table tbody tr:hover td {
+      background: color-mix(in srgb, var(--tag-soft) 74%, #ffffff);
+      cursor: pointer;
+    }
+    .overview-tag-mini-table .mini-word { width: 46%; font-weight: 950; color: #0f172a; }
+    .overview-tag-mini-table .mini-meaning { color: #475569; }
+    .overview-tag-mini-table .mini-word .article-inline { color:#2563eb; font-weight:950; margin-right:4px; }
+    .overview-open-sheet-btn {
+      border: 1px solid var(--line, #e2e8f0);
+      background: #0f172a;
+      color: white;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+    .overview-open-sheet-btn:hover { filter: brightness(1.05); }
+    @media(max-width:1400px){ .overview-tag-table-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media(max-width:1000px){ .overview-tag-table-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media(max-width:720px){ .overview-tag-table-grid { grid-template-columns: 1fr; } }
+
+
+    /* Separate Redemittel launch */
+    .redemittel-launch-row {
+      display: flex;
+      justify-content: flex-start;
+      margin: 0 0 12px;
+    }
+    .redemittel-launch-btn {
+      border: 1px solid #99f6e4;
+      background: #f0fdfa;
+      color: #115e59;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 950;
+      cursor: pointer;
+      box-shadow: 0 5px 14px rgba(20,184,166,.10);
+    }
+    .redemittel-launch-btn:hover { background: #ccfbf1; transform: translateY(-1px); }
+
   </style>
 </head>
 <body>
@@ -1803,6 +2067,7 @@
     <main class="grid">
       <section class="card">
         <h2>Einträge</h2>
+        <div class="redemittel-launch-row"><button id="openRedemittelBtn" class="redemittel-launch-btn" type="button">Redemittel separat öffnen</button></div>
         <input id="search" placeholder="Deutsch, Bedeutung, Beispiel oder Tag suchen" />
         <div class="filter-panel">
           <div class="filter-row filter-main-row" aria-label="Wortart-Filter">
@@ -1810,7 +2075,6 @@
             <button class="pill" data-filter="verb" type="button">Verben</button>
             <button class="pill" data-filter="noun" type="button">Nomen</button>
             <button class="pill" data-filter="expression" type="button">Ausdrücke</button>
-            <button class="pill" data-filter="redemittel" type="button">Redemittel</button>
             <button class="pill" data-filter="word" type="button">Wörter</button>
           </div>
           <div id="verbFilterRow" class="filter-row filter-verb-row" aria-label="Verbarten-Filter">
@@ -1853,7 +2117,18 @@
           <p id="overviewModalSubtitle" class="detail-modal-subtitle"></p>
           <div class="overview-modal-tools">
             <button id="copyOverviewBtn" class="overview-copy-btn" type="button">Liste kopieren</button>
-            <span>Kompakte Liste der aktuellen Treffer.</span>
+            <button id="openStudySheetBtn" class="overview-open-sheet-btn" type="button">Lernblatt öffnen</button>
+            <label class="overview-sort-control">Ordnen nach
+              <select id="overviewGroupMode" onchange="renderOverviewModal()">
+                <option value="none">Aktuelle Filter</option>
+                <option value="tag" selected>Tags</option>
+                <option value="type">Wortart</option>
+                <option value="alpha">Alphabet</option>
+                <option value="article">Artikel</option>
+                <option value="verbClass">Verbklasse</option>
+              </select>
+            </label>
+            <span>Tags werden als kleine farbige Tabellen angezeigt. „Lernblatt öffnen“ erstellt eine kompakte Druckansicht in einem neuen Fenster.</span>
           </div>
         </div>
         <button id="overviewModalClose" class="detail-modal-close" type="button" aria-label="Wortliste schließen">×</button>
@@ -1872,6 +2147,7 @@ let selectedTypeFilters = new Set();
 let selectedVerbClassFilters = new Set();
 let selectedTagFilters = new Set();
 let prepositionOnly = false;
+let overviewTableMode = false;
 
 const persons = [["ich","ich"],["du","du"],["er","er/sie/es"],["wir","wir"],["ihr","ihr"],["sie","sie/Sie"]];
 const imperativePersons = [["du","du"],["wir","wir"],["ihr","ihr"],["Sie","Sie"]];
@@ -1901,8 +2177,12 @@ const elements = {
   overviewModalSubtitle:$("overviewModalSubtitle"),
   overviewModalClose:$("overviewModalClose"),
   copyOverviewBtn:$("copyOverviewBtn"),
+  openStudySheetBtn:$("openStudySheetBtn"),
+  toggleOverviewTableBtn:$("toggleOverviewTableBtn"),
+  downloadOverviewCsvBtn:$("downloadOverviewCsvBtn"),
   verbFilterRow:$("verbFilterRow"),
-  tagFilterRow:$("tagFilterRow")
+  tagFilterRow:$("tagFilterRow"),
+  openRedemittelBtn:$("openRedemittelBtn")
 };
 
 function setStatus(message, isError=false){
@@ -1963,6 +2243,15 @@ function getEntryTags(entry){
     });
 }
 
+
+function getMainEntries(){
+  return entries.filter(entry => entry.type !== "redemittel");
+}
+
+function getRedemittelEntries(){
+  return entries.filter(entry => entry.type === "redemittel");
+}
+
 function tagDisplayLabel(tag){
   return normalizeTag(tag);
 }
@@ -1975,7 +2264,7 @@ function renderTagBadges(entry){
 
 function renderTagFilterRow(){
   if(!elements.tagFilterRow) return;
-  const tags = [...new Set(entries.flatMap(e => getEntryTags(e)))].sort((a,b) => a.localeCompare(b, "ko"));
+  const tags = [...new Set(getMainEntries().flatMap(e => getEntryTags(e)))].sort((a,b) => a.localeCompare(b, "ko"));
   if(tags.length === 0){
     elements.tagFilterRow.innerHTML = "";
     return;
@@ -2269,7 +2558,7 @@ function renderPrepMeanings(entry){
 
 function getFilteredEntries(){
   const query = normalizeGerman(elements.search.value);
-  return entries.filter(e => {
+  return getMainEntries().filter(e => {
     if(selectedTypeFilters.size > 0 && !selectedTypeFilters.has(e.type)) return false;
     if(selectedVerbClassFilters.size > 0 && !(e.type === "verb" && selectedVerbClassFilters.has(e.verbClass))) return false;
     if(prepositionOnly && !(e.type==="verb" && e.prepMeanings && e.prepMeanings.length)) return false;
@@ -2294,7 +2583,7 @@ function getFilteredEntries(){
 function render(){
   const filtered = getFilteredEntries();
 
-  elements.entryCount.textContent = entries.length;
+  elements.entryCount.textContent = getMainEntries().length;
   renderTagFilterRow();
 
   if(filtered.length === 0){
@@ -2330,30 +2619,317 @@ function render(){
   }).join("");
 }
 
+function getOverviewGroupMode(){
+  const select = document.getElementById("overviewGroupMode");
+  return select ? select.value : "tag";
+}
+
+function overviewRowHtml(e){
+  const articleBadge = e.type === "noun" && e.article ? `<span class="badge ${articleClass(e.article)} overview-article-badge">${escapeHtml(e.article)}</span>` : "";
+  const tagText = getEntryTags(e).length ? ` #${getEntryTags(e).join(" #")}` : "";
+  return `<button class="overview-simple-row" type="button" onclick="openDetailFromOverview('${e.id}')">
+      <span class="overview-type-wrap"><span class="badge ${typeClass(e.type)} overview-simple-type">${typeLabel(e.type)}</span>${articleBadge}</span>
+      <span class="overview-simple-word">${escapeHtml(e.german || "-")}</span>
+      <span class="overview-simple-meaning">${escapeHtml((e.meaningKo || "-") + tagText)}</span>
+    </button>`;
+}
+
+function getOverviewGroups(list){
+  const mode = getOverviewGroupMode();
+  const groups = new Map();
+  const add = (label, entry) => {
+    const key = label || "Sonstiges";
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(entry);
+  };
+
+  list.forEach(e => {
+    if(mode === "tag"){
+      const tags = getEntryTags(e);
+      if(tags.length) tags.forEach(tag => add(`#${tag}`, e));
+      else add("#Ohne Tag", e);
+      return;
+    }
+    if(mode === "type") return add(typeLabel(e.type), e);
+    if(mode === "article") return add(e.type === "noun" ? (e.article || "Ohne Artikel") : typeLabel(e.type), e);
+    if(mode === "verbClass") return add(e.type === "verb" ? (e.verbClass || "Ohne Verbklasse") : typeLabel(e.type), e);
+    if(mode === "alpha"){
+      const first = (e.german || "#").trim().charAt(0).toUpperCase();
+      return add(first || "#", e);
+    }
+    add("Aktuelle Treffer", e);
+  });
+
+  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b, "de"));
+}
+
+
+function getOverviewGroupLabelForEntry(e){
+  const mode = getOverviewGroupMode();
+  if(mode === "tag"){
+    const tags = getEntryTags(e);
+    return tags.length ? tags.map(tag => `#${tag}`).join(", ") : "#Ohne Tag";
+  }
+  if(mode === "type") return typeLabel(e.type);
+  if(mode === "article") return e.type === "noun" ? (e.article || "Ohne Artikel") : typeLabel(e.type);
+  if(mode === "verbClass") return e.type === "verb" ? (e.verbClass || "Ohne Verbklasse") : typeLabel(e.type);
+  if(mode === "alpha") return ((e.german || "#").trim().charAt(0).toUpperCase() || "#");
+  return "Aktuelle Treffer";
+}
+
+function overviewTableRows(list){
+  return list.map(e => ({
+    id: e.id,
+    group: getOverviewGroupLabelForEntry(e),
+    type: typeLabel(e.type),
+    article: e.type === "noun" ? (e.article || "") : "",
+    german: e.german || "",
+    meaning: e.meaningKo || "",
+    tags: getEntryTags(e).join(", "),
+    plural: e.type === "noun" ? (e.plural || "") : "",
+    infinitive: e.type === "verb" ? (e.infinitive || "") : "",
+    partizipII: e.type === "verb" ? (e.partizipII || "") : "",
+    auxiliary: e.type === "verb" ? (e.auxiliary || "") : "",
+    verbClass: e.type === "verb" ? (e.verbClass || "") : "",
+    exampleDe: e.exampleDe || "",
+    exampleKo: e.exampleKo || ""
+  }));
+}
+
+function renderOverviewTable(list){
+  const rows = overviewTableRows(list);
+  return `<div class="overview-table-wrap"><table class="overview-excel-table" aria-label="Wortliste als Excel-Tabelle">
+    <thead><tr>
+      <th class="col-group">Gruppe</th>
+      <th class="col-type">Wortart</th>
+      <th class="col-article">Artikel</th>
+      <th class="col-word">Deutsch</th>
+      <th class="col-meaning">Bedeutung</th>
+      <th class="col-tags">Tags</th>
+      <th class="col-small">Plural</th>
+      <th class="col-small">Infinitiv</th>
+      <th class="col-small">Partizip II</th>
+      <th class="col-small">Hilfsverb</th>
+      <th class="col-small">Verbklasse</th>
+      <th class="col-example">Beispiel DE</th>
+      <th class="col-example">Beispiel Übersetzung</th>
+    </tr></thead>
+    <tbody>${rows.map(row => `<tr onclick="openDetailFromOverview('${row.id}')">
+      <td>${escapeHtml(row.group)}</td>
+      <td>${escapeHtml(row.type)}</td>
+      <td>${escapeHtml(row.article)}</td>
+      <td class="col-word">${escapeHtml(row.german)}</td>
+      <td>${escapeHtml(row.meaning)}</td>
+      <td>${escapeHtml(row.tags)}</td>
+      <td>${escapeHtml(row.plural)}</td>
+      <td>${escapeHtml(row.infinitive)}</td>
+      <td>${escapeHtml(row.partizipII)}</td>
+      <td>${escapeHtml(row.auxiliary)}</td>
+      <td>${escapeHtml(row.verbClass)}</td>
+      <td>${escapeHtml(row.exampleDe)}</td>
+      <td>${escapeHtml(row.exampleKo)}</td>
+    </tr>`).join("")}</tbody>
+  </table></div>`;
+}
+
+function csvCell(value){
+  const text = String(value ?? "").replace(/\r?\n/g, " ");
+  return `"${text.replaceAll('"', '""')}"`;
+}
+
+function buildOverviewCsv(list){
+  const headers = ["Gruppe","Wortart","Artikel","Deutsch","Bedeutung","Tags","Plural","Infinitiv","Partizip II","Hilfsverb","Verbklasse","Beispiel DE","Beispiel Übersetzung"];
+  const lines = [headers.map(csvCell).join(",")];
+  overviewTableRows(list).forEach(row => {
+    lines.push([row.group,row.type,row.article,row.german,row.meaning,row.tags,row.plural,row.infinitive,row.partizipII,row.auxiliary,row.verbClass,row.exampleDe,row.exampleKo].map(csvCell).join(","));
+  });
+  return "\ufeff" + lines.join("\r\n");
+}
+
+function downloadOverviewCsv(){
+  const list = getFilteredEntries();
+  const csv = buildOverviewCsv(list);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const date = new Date().toISOString().slice(0,10);
+  link.href = url;
+  link.download = `deutsches-vokabelheft-${date}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function toggleOverviewTableMode(){
+  overviewTableMode = !overviewTableMode;
+  if(elements.toggleOverviewTableBtn){
+    elements.toggleOverviewTableBtn.classList.toggle("active", overviewTableMode);
+    elements.toggleOverviewTableBtn.textContent = overviewTableMode ? "Kartenansicht" : "Excel-Tabelle";
+  }
+  renderOverviewModal();
+}
+
 function buildOverviewText(list){
-  return list.map(e => {
-    const tags = getEntryTags(e).length ? ` #${getEntryTags(e).join(" #")}` : "";
-    return `${typeLabel(e.type)} - ${e.german} - ${e.meaningKo || "-"}${tags}`;
-  }).join("\n");
+  const mode = getOverviewGroupMode();
+  if(mode === "none"){
+    return list.map(e => {
+      const tags = getEntryTags(e).length ? ` #${getEntryTags(e).join(" #")}` : "";
+      return `${typeLabel(e.type)} - ${e.german} - ${e.meaningKo || "-"}${tags}`;
+    }).join("\n");
+  }
+  return getOverviewGroups(list).map(([label, items]) => {
+    const lines = items.map(e => {
+      const article = e.type === "noun" && e.article ? `${e.article} ` : "";
+      return `${article}${e.german} - ${e.meaningKo || "-"}`;
+    }).join("\n");
+    return `[${label}]
+${lines}`;
+  }).join("\n\n");
+}
+
+
+function displayGermanForSheet(e){
+  const article = e.type === "noun" && e.article ? `${e.article} ` : "";
+  return `${article}${e.german || "-"}`;
+}
+
+function renderOverviewTagTables(list){
+  const groups = getOverviewGroups(list);
+  return `<div class="overview-tag-table-grid">${groups.map(([label, items]) => `
+    <section class="overview-tag-table-card">
+      <h3 class="overview-tag-table-title"><span class="tag-dot"></span><span class="tag-title-text">${escapeHtml(label)}</span><span class="count-badge">${items.length}</span></h3>
+      <table class="overview-tag-mini-table" aria-label="${escapeHtml(label)}">
+        <thead><tr><th class="mini-word">Deutsch</th><th class="mini-meaning">Español</th></tr></thead>
+        <tbody>${items.map(e => `<tr onclick="openDetailFromOverview('${e.id}')">
+          <td class="mini-word">${escapeHtml(displayGermanForSheet(e))}</td>
+          <td class="mini-meaning">${escapeHtml(e.meaningKo || "-")}</td>
+        </tr>`).join("")}</tbody>
+      </table>
+    </section>
+  `).join("")}</div>`;
+}
+
+function buildStudySheetHtml(list){
+  const groups = getOverviewGroups(list);
+  const palette = [
+    ["#3b82f6", "#eff6ff"], ["#22c55e", "#f0fdf4"], ["#f59e0b", "#fffbeb"],
+    ["#8b5cf6", "#f5f3ff"], ["#ec4899", "#fdf2f8"], ["#14b8a6", "#f0fdfa"],
+    ["#ef4444", "#fef2f2"], ["#06b6d4", "#ecfeff"]
+  ];
+  const generatedAt = new Date().toLocaleDateString("de-DE");
+  const tables = groups.map(([label, items], index) => {
+    const [accent, soft] = palette[index % palette.length];
+    return `<section class="tag-card" style="--accent:${accent};--soft:${soft}">
+      <h2><span>${escapeHtml(label)}</span><b>${items.length}</b></h2>
+      <table><thead><tr><th>Deutsch</th><th>Español</th></tr></thead>
+      <tbody>${items.map(e => `<tr><td>${escapeHtml(displayGermanForSheet(e))}</td><td>${escapeHtml(e.meaningKo || "-")}</td></tr>`).join("")}</tbody></table>
+    </section>`;
+  }).join("");
+  return `<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vokabel-Lernblatt</title>
+<style>
+*{box-sizing:border-box} body{margin:0;padding:18px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fbfaf7;color:#111827} 
+.header{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:14px;border-bottom:2px solid #e5e7eb;padding-bottom:10px} 
+h1{font-size:24px;margin:0;letter-spacing:-.04em}.meta{font-size:12px;color:#64748b;font-weight:800}.actions{display:flex;gap:8px}.actions button{border:1px solid #cbd5e1;background:white;border-radius:999px;padding:9px 12px;font-weight:900;cursor:pointer}.actions button.primary{background:#111827;color:white;border-color:#111827}
+.sheet-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:start}.tag-card{break-inside:avoid;border:1px solid color-mix(in srgb,var(--accent) 36%,#e5e7eb);border-radius:10px;overflow:hidden;background:white;box-shadow:0 3px 10px rgba(15,23,42,.05)}
+h2{display:flex;justify-content:space-between;align-items:center;gap:6px;margin:0;padding:6px 8px;background:linear-gradient(90deg,var(--soft),#fff);border-bottom:2px solid color-mix(in srgb,var(--accent) 45%,#e5e7eb);font-size:13px}h2 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}h2 b{background:var(--accent);color:white;border-radius:999px;padding:2px 7px;font-size:11px}
+table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border-bottom:1px solid #e5e7eb;padding:3px 5px;text-align:left;vertical-align:top;font-size:11.5px;line-height:1.12}th{background:color-mix(in srgb,var(--soft) 65%,white);font-weight:950;color:#334155}td:first-child{width:48%;font-weight:850;color:#111827}tr:nth-child(even) td{background:color-mix(in srgb,var(--soft) 28%,white)}tr:last-child td{border-bottom:0}
+@media(max-width:1200px){.sheet-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:800px){.sheet-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){body{padding:10px}.sheet-grid{grid-template-columns:1fr}.header{align-items:flex-start;flex-direction:column}}
+@media print{body{padding:8mm;background:white}.actions{display:none}.header{margin-bottom:8px}.sheet-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.tag-card{box-shadow:none;page-break-inside:avoid}th,td{font-size:9.2px;padding:2px 4px}h2{font-size:10.5px;padding:4px 6px}}
+</style>
+</head>
+<body>
+<div class="header"><div><h1>Vokabel-Lernblatt</h1><div class="meta">${list.length} Wörter · ${groups.length} Tags · ${escapeHtml(generatedAt)}</div></div><div class="actions"><button onclick="window.print()" class="primary">Drucken / PDF</button><button onclick="window.close()">Schließen</button></div></div>
+<div class="sheet-grid">${tables}</div>
+</body>
+</html>`;
+}
+
+function openStudySheetWindow(){
+  const list = getFilteredEntries();
+  const win = window.open("about:blank", "_blank");
+  if(!win){
+    alert("Das neue Fenster wurde blockiert. Bitte Pop-ups für diese Seite erlauben.");
+    return;
+  }
+  win.document.open();
+  win.document.write(buildStudySheetHtml(list));
+  win.document.close();
 }
 
 function renderOverviewModal(){
   const list = getFilteredEntries();
-  elements.overviewModalSubtitle.textContent = `${list.length} Treffer von ${entries.length} Einträgen`;
+  const mode = getOverviewGroupMode();
+  const modeLabel = document.getElementById("overviewGroupMode")?.selectedOptions?.[0]?.textContent || "Aktuelle Filter";
+  elements.overviewModalSubtitle.textContent = `${list.length} Treffer von ${getMainEntries().length} normalen Einträgen · Redemittel ${getRedemittelEntries().length} · ${modeLabel}`;
   if(list.length === 0){
     elements.overviewModalBody.innerHTML = '<div class="empty">Keine Einträge gefunden.</div>';
     return;
   }
 
-  elements.overviewModalBody.innerHTML = `<div class="overview-simple-list">${list.map(e => {
-    const articleBadge = e.type === "noun" && e.article ? `<span class="badge ${articleClass(e.article)} overview-article-badge">${escapeHtml(e.article)}</span>` : "";
-    const tagText = getEntryTags(e).length ? ` #${getEntryTags(e).join(" #")}` : "";
-    return `<button class="overview-simple-row" type="button" onclick="openDetailFromOverview('${e.id}')">
-      <span class="overview-type-wrap"><span class="badge ${typeClass(e.type)} overview-simple-type">${typeLabel(e.type)}</span>${articleBadge}</span>
-      <span class="overview-simple-word">${escapeHtml(e.german || "-")}</span>
-      <span class="overview-simple-meaning">${escapeHtml((e.meaningKo || "-") + tagText)}</span>
-    </button>`;
-  }).join("")}</div>`;
+  if(mode === "tag"){
+    elements.overviewModalBody.innerHTML = renderOverviewTagTables(list);
+    return;
+  }
+
+  if(mode === "none"){
+    elements.overviewModalBody.innerHTML = `<div class="overview-simple-list">${list.map(overviewRowHtml).join("")}</div>`;
+    return;
+  }
+
+  elements.overviewModalBody.innerHTML = `<div class="overview-grouped-list">${getOverviewGroups(list).map(([label, items]) => `
+    <section class="overview-group-box">
+      <h3 class="overview-group-title"><span>${escapeHtml(label)}</span><span class="count-badge">${items.length}</span></h3>
+      <div class="overview-simple-list">${items.map(overviewRowHtml).join("")}</div>
+    </section>
+  `).join("")}</div>`;
+}
+
+
+function groupEntriesByTagForRedemittel(list){
+  const map = new Map();
+  list.forEach(entry => {
+    const tags = getEntryTags(entry);
+    const labels = tags.length ? tags : ["Ohne Tag"];
+    labels.forEach(label => {
+      if(!map.has(label)) map.set(label, []);
+      map.get(label).push(entry);
+    });
+  });
+  return [...map.entries()].sort((a,b) => a[0].localeCompare(b[0], "de"));
+}
+
+function buildRedemittelWindowHtml(){
+  const list = getRedemittelEntries().slice().sort((a,b) => a.german.localeCompare(b.german,"de"));
+  const groups = groupEntriesByTagForRedemittel(list);
+  const palette = [
+    ["#14b8a6", "#f0fdfa"], ["#3b82f6", "#eff6ff"], ["#f59e0b", "#fffbeb"],
+    ["#8b5cf6", "#f5f3ff"], ["#ec4899", "#fdf2f8"], ["#22c55e", "#f0fdf4"]
+  ];
+  const tables = groups.map(([label, items], index) => {
+    const [accent, soft] = palette[index % palette.length];
+    return `<section class="tag-card" style="--accent:${accent};--soft:${soft}">
+      <h2><span>#${escapeHtml(label)}</span><b>${items.length}</b></h2>
+      <table><thead><tr><th>Redemittel</th><th>Español</th></tr></thead>
+      <tbody>${items.map(e => `<tr><td>${escapeHtml(e.german || "-")}</td><td>${escapeHtml(e.meaningKo || "-")}</td></tr>`).join("")}</tbody></table>
+    </section>`;
+  }).join("") || `<div class="empty">Keine Redemittel gespeichert.</div>`;
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Redemittel</title><style>
+*{box-sizing:border-box}body{margin:0;padding:18px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#fbfaf7;color:#111827}.header{display:flex;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:14px;border-bottom:2px solid #e5e7eb;padding-bottom:10px}h1{font-size:25px;margin:0;letter-spacing:-.04em}.meta{font-size:12px;color:#64748b;font-weight:800}.actions{display:flex;gap:8px}.actions button{border:1px solid #cbd5e1;background:white;border-radius:999px;padding:9px 12px;font-weight:900;cursor:pointer}.actions button.primary{background:#111827;color:white;border-color:#111827}.sheet-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:start}.tag-card{break-inside:avoid;border:1px solid color-mix(in srgb,var(--accent) 38%,#e5e7eb);border-radius:12px;overflow:hidden;background:white;box-shadow:0 3px 10px rgba(15,23,42,.05)}h2{display:flex;justify-content:space-between;gap:8px;margin:0;padding:7px 9px;background:linear-gradient(90deg,var(--soft),#fff);border-bottom:2px solid color-mix(in srgb,var(--accent) 45%,#e5e7eb);font-size:14px}h2 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}h2 b{background:var(--accent);color:white;border-radius:999px;padding:2px 7px;font-size:11px}table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border-bottom:1px solid #e5e7eb;padding:4px 6px;text-align:left;vertical-align:top;font-size:12px;line-height:1.18}th{background:color-mix(in srgb,var(--soft) 65%,white);font-weight:950;color:#334155}td:first-child{width:52%;font-weight:850;color:#111827}tr:nth-child(even) td{background:color-mix(in srgb,var(--soft) 25%,white)}tr:last-child td{border-bottom:0}.empty{padding:28px;border:1px dashed #cbd5e1;border-radius:16px;color:#64748b;background:white}@media(max-width:1200px){.sheet-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:800px){.sheet-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){body{padding:10px}.sheet-grid{grid-template-columns:1fr}.header{align-items:flex-start;flex-direction:column}}@media print{body{padding:8mm;background:white}.actions{display:none}.sheet-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.tag-card{box-shadow:none;page-break-inside:avoid}th,td{font-size:9.3px;padding:2px 4px}h2{font-size:10.5px;padding:4px 6px}}
+</style></head><body><div class="header"><div><h1>Redemittel</h1><div class="meta">${list.length} Einträge · separate Ansicht nach Tags</div></div><div class="actions"><button onclick="window.print()" class="primary">Drucken / PDF</button><button onclick="window.close()">Schließen</button></div></div><div class="sheet-grid">${tables}</div></body></html>`;
+}
+
+function openRedemittelWindow(){
+  const win = window.open("about:blank", "_blank");
+  if(!win){ alert("Das neue Fenster wurde blockiert. Bitte Pop-ups für diese Seite erlauben."); return; }
+  win.document.open();
+  win.document.write(buildRedemittelWindowHtml());
+  win.document.close();
 }
 
 function openOverviewModal(){
@@ -2481,11 +3057,15 @@ elements.detailModalBackdrop.addEventListener("click", (event) => {
   if(event.target === elements.detailModalBackdrop) closeDetailModal();
 });
 elements.openOverviewBtn.addEventListener("click", openOverviewModal);
+if(elements.openRedemittelBtn) elements.openRedemittelBtn.addEventListener("click", openRedemittelWindow);
 elements.overviewModalClose.addEventListener("click", closeOverviewModal);
 elements.overviewModalBackdrop.addEventListener("click", (event) => {
   if(event.target === elements.overviewModalBackdrop) closeOverviewModal();
 });
 elements.copyOverviewBtn.addEventListener("click", copyOverviewList);
+if(elements.openStudySheetBtn) elements.openStudySheetBtn.addEventListener("click", openStudySheetWindow);
+if(elements.toggleOverviewTableBtn) elements.toggleOverviewTableBtn.addEventListener("click", toggleOverviewTableMode);
+if(elements.downloadOverviewCsvBtn) elements.downloadOverviewCsvBtn.addEventListener("click", downloadOverviewCsv);
 document.addEventListener("keydown", (event) => {
   if(event.key !== "Escape") return;
   if(elements.overviewModalBackdrop.classList.contains("open")) closeOverviewModal();
