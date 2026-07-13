@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mein deutscher Wortschatz · FINAL v5</title>
+  <title>Mein deutscher Wortschatz · FINAL v6</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -235,28 +235,14 @@
       white-space: nowrap;
     }
     .card-row-extra {
-      display: flex;
-      align-items: baseline;
-      gap: 5px;
       margin-top: 5px;
-      min-width: 0;
-      color: #374151;
-      font-size: 12px;
-      line-height: 1.35;
-    }
-    .card-row-extra-label {
-      flex: 0 0 auto;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: .03em;
-      text-transform: uppercase;
-    }
-    .card-row-extra-value {
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: #374151;
+      font-size: 12px;
+      line-height: 1.35;
       font-weight: 650;
     }
     .card-row-meaning {
@@ -389,7 +375,7 @@
       <div class="brand-mark">DE</div>
       <div>
         <h1>Mein deutscher Wortschatz</h1>
-        <small>Supabase · FINAL v5</small>
+        <small>Supabase · FINAL v6</small>
       </div>
     </div>
     <div class="top-actions">
@@ -743,10 +729,7 @@
             <span>${escapeHtml(card.german)}</span>
           </div>
           ${card.extra2 ? `
-            <div class="card-row-extra" title="${escapeHtml(card.extra2)}">
-              <span class="card-row-extra-label">Zusatzinfo</span>
-              <span class="card-row-extra-value">${escapeHtml(card.extra2)}</span>
-            </div>
+            <div class="card-row-extra" title="${escapeHtml(card.extra2)}">${escapeHtml(card.extra2)}</div>
           ` : ""}
           <div class="card-row-meaning">${escapeHtml(card.meaning || "Keine Bedeutung")}</div>
           ${(card.tags || []).length ? `<div class="chips">${
