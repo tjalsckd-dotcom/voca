@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mein deutscher Wortschatz</title>
+  <title>Mein deutscher Wortschatz · FINAL v5</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -234,6 +234,31 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .card-row-extra {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      margin-top: 5px;
+      min-width: 0;
+      color: #374151;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .card-row-extra-label {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+    .card-row-extra-value {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 650;
+    }
     .card-row-meaning {
       color: var(--muted);
       font-size: 12px;
@@ -364,7 +389,7 @@
       <div class="brand-mark">DE</div>
       <div>
         <h1>Mein deutscher Wortschatz</h1>
-        <small>Automatisch in Supabase gespeichert</small>
+        <small>Supabase · FINAL v5</small>
       </div>
     </div>
     <div class="top-actions">
@@ -410,15 +435,6 @@
       <div class="section-title">Tags</div>
       <div id="tagFilters"></div>
 
-      <div class="sidebar-actions">
-        <button id="importSeedBtn" class="btn">688 vorhandene Wörter importieren</button>
-        <button id="exportJsonBtn" class="btn">JSON-Sicherung</button>
-        <button id="exportCsvBtn" class="btn">CSV-Sicherung</button>
-        <button id="refreshBtn" class="btn">Aktualisieren</button>
-      </div>
-      <div class="sidebar-note">
-        Beim Import werden nur Wörter hinzugefügt, die in diesem Konto noch nicht vorhanden sind.
-      </div>
     </aside>
 
     <section class="list-pane">
@@ -610,8 +626,8 @@
         $("connectionPill").textContent = `${session.user.email} · ${cards.length} Wörter`;
       } catch (error) {
         console.error(error);
-        $("listStatus").textContent = "Laden fehlgeschlagen";
-        showToast("Die Daten konnten nicht geladen werden: " + error.message, true);
+        $("listStatus").textContent = "Laden oder Anzeigen fehlgeschlagen";
+        showToast("Fehler beim Laden oder Anzeigen: " + (error.message || error), true);
       }
     }
 
@@ -698,9 +714,12 @@
         });
       });
 
-      $("tagSuggestions").innerHTML = tags
-        .map(([tag]) => `<option value="${escapeHtml(tag)}"></option>`)
-        .join("");
+      const tagSuggestions = $("tagSuggestions");
+      if (tagSuggestions) {
+        tagSuggestions.innerHTML = tags
+          .map(([tag]) => `<option value="${escapeHtml(tag)}"></option>`)
+          .join("");
+      }
     }
 
     function renderList() {
@@ -723,6 +742,12 @@
             <span class="badge ${escapeHtml(card.word_type)}">${TYPE_LABELS[card.word_type] || escapeHtml(card.word_type)}</span>
             <span>${escapeHtml(card.german)}</span>
           </div>
+          ${card.extra2 ? `
+            <div class="card-row-extra" title="${escapeHtml(card.extra2)}">
+              <span class="card-row-extra-label">Zusatzinfo</span>
+              <span class="card-row-extra-value">${escapeHtml(card.extra2)}</span>
+            </div>
+          ` : ""}
           <div class="card-row-meaning">${escapeHtml(card.meaning || "Keine Bedeutung")}</div>
           ${(card.tags || []).length ? `<div class="chips">${
             card.tags.slice(0, 3).map(tag => `<button class="chip" data-chip-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")
@@ -797,6 +822,25 @@
         border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
       .field textarea{min-height:90px;resize:vertical}
       .hint{color:var(--muted);font-size:12px;margin-top:5px}
+      .tag-recommendation-wrap{
+        margin-top:9px;padding:10px;border:1px solid var(--line);
+        border-radius:10px;background:#f9fafb
+      }
+      .tag-recommendation-title{
+        color:var(--muted);font-size:12px;font-weight:750;margin-bottom:7px
+      }
+      .tag-recommendations{
+        display:flex;flex-wrap:wrap;gap:6px;max-height:142px;overflow:auto
+      }
+      .tag-suggestion{
+        border:1px solid #dbe2ea;background:#fff;color:#374151;
+        border-radius:999px;padding:5px 9px;font-size:12px
+      }
+      .tag-suggestion:hover{
+        border-color:var(--primary);background:#eff6ff;color:#1d4ed8
+      }
+      .tag-count{color:#9ca3af;margin-left:4px}
+      .tag-empty{color:var(--muted);font-size:12px}
       .editor-actions{display:flex;justify-content:flex-end;gap:8px}
       @media(max-width:560px){.wrap{padding:0}.card,.editor{border-radius:0;border:0;min-height:100vh}
         .head,.body,.editor{padding-left:20px;padding-right:20px}.grid{grid-template-columns:1fr}}
@@ -879,10 +923,6 @@
       const win = ensureCardWindow(isNew ? "Neues Wort" : card.german);
       if (!win) return;
 
-      const tagOptions = getAllTags()
-        .map(([tag]) => `<option value="${escapeHtml(tag)}"></option>`)
-        .join("");
-
       win.document.getElementById("popupRoot").innerHTML = `
         <div class="wrap">
           <form id="popupCardForm" class="editor">
@@ -917,9 +957,12 @@
             </div>
             <div class="field">
               <label for="popupTags">Tags</label>
-              <input id="popupTags" list="popupTagSuggestions" value="${escapeHtml((card?.tags || []).join(", "))}" placeholder="Reisen, Unterricht, Nachrichten">
-              <datalist id="popupTagSuggestions">${tagOptions}</datalist>
-              <div class="hint">Mehrere Tags mit Kommas trennen.</div>
+              <input id="popupTags" value="${escapeHtml((card?.tags || []).join(", "))}" placeholder="Reisen, Unterricht, Nachrichten" autocomplete="off">
+              <div class="hint">Mehrere Tags mit Kommas trennen. Klicke unten auf einen vorhandenen Tag, um ihn hinzuzufügen.</div>
+              <div class="tag-recommendation-wrap">
+                <div class="tag-recommendation-title">Vorhandene Tags</div>
+                <div id="popupTagRecommendations" class="tag-recommendations"></div>
+              </div>
             </div>
             <div class="field">
               <label for="popupNotes">Notizen</label>
@@ -940,7 +983,84 @@
         if (card?.id) openDetailWindow(card.id);
         else win.close();
       });
+      setupPopupTagRecommendations(win);
       win.document.getElementById("popupGerman").focus();
+    }
+
+    function setupPopupTagRecommendations(win) {
+      const doc = win.document;
+      const input = doc.getElementById("popupTags");
+      const container = doc.getElementById("popupTagRecommendations");
+      if (!input || !container) return;
+
+      const allTags = getAllTags()
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag, "de"));
+
+      function normalizeTag(value) {
+        return String(value || "").trim().toLocaleLowerCase("de");
+      }
+
+      function selectedTags() {
+        return parseTags(input.value);
+      }
+
+      function currentSearch() {
+        const parts = String(input.value || "").split(/[,;\n]/);
+        return normalizeTag(parts.at(-1));
+      }
+
+      function addSuggestedTag(tag) {
+        const raw = String(input.value || "");
+        const endsWithSeparator = /[,;\n]\s*$/.test(raw);
+        let parts = raw
+          .split(/[,;\n]/)
+          .map(value => value.trim())
+          .filter(Boolean);
+
+        if (!endsWithSeparator && parts.length) {
+          parts.pop();
+        }
+
+        const existing = new Set(parts.map(normalizeTag));
+        if (!existing.has(normalizeTag(tag))) {
+          parts.push(tag);
+        }
+
+        input.value = parts.join(", ");
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+        renderRecommendations();
+      }
+
+      function renderRecommendations() {
+        const chosen = new Set(selectedTags().map(normalizeTag));
+        const query = currentSearch();
+
+        const matches = allTags
+          .filter(item => !chosen.has(normalizeTag(item.tag)))
+          .filter(item => !query || normalizeTag(item.tag).includes(query))
+          .slice(0, 18);
+
+        if (!matches.length) {
+          container.innerHTML = '<span class="tag-empty">Keine passenden vorhandenen Tags</span>';
+          return;
+        }
+
+        container.innerHTML = matches.map(item => `
+          <button type="button" class="tag-suggestion" data-tag="${escapeHtml(item.tag)}">
+            ${escapeHtml(item.tag)}<span class="tag-count">${item.count}</span>
+          </button>
+        `).join("");
+
+        container.querySelectorAll("[data-tag]").forEach(button => {
+          button.addEventListener("click", () => addSuggestedTag(button.dataset.tag));
+        });
+      }
+
+      input.addEventListener("input", renderRecommendations);
+      input.addEventListener("focus", renderRecommendations);
+      renderRecommendations();
     }
 
     async function saveCardFromPopup(cardId) {
@@ -1118,10 +1238,6 @@
       renderList();
     });
     $("sortSelect").addEventListener("change", renderList);
-    $("importSeedBtn").addEventListener("click", importSeedCards);
-    $("exportJsonBtn").addEventListener("click", exportJson);
-    $("exportCsvBtn").addEventListener("click", exportCsv);
-    $("refreshBtn").addEventListener("click", loadCards);
 
     db.auth.onAuthStateChange((_event, nextSession) => {
       handleSession(nextSession);
