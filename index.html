@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="ko">
+<html lang="de">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>나의 독일어 단어장</title>
+  <title>Mein deutscher Wortschatz</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -136,16 +136,15 @@
     .app {
       height: calc(100vh - 64px);
       display: grid;
-      grid-template-columns: 250px minmax(320px, 430px) minmax(380px, 1fr);
+      grid-template-columns: 280px minmax(0, 1fr);
     }
-    .sidebar, .list-pane, .detail-pane {
+    .sidebar, .list-pane {
       min-width: 0;
       overflow: auto;
       background: #fff;
     }
     .sidebar { border-right: 1px solid var(--line); padding: 16px; }
-    .list-pane { border-right: 1px solid var(--line); }
-    .detail-pane { background: #fafafa; }
+    .list-pane { overflow: auto; }
     .section-title {
       margin: 18px 0 8px;
       font-size: 12px;
@@ -204,22 +203,41 @@
       max-width: 135px;
     }
     .list-status { margin-top: 5px; color: var(--muted); font-size: 13px; }
-    .card-list { padding: 8px; }
+    .card-list {
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+      gap: 6px;
+      align-content: start;
+    }
     .card-row {
-      border: 1px solid transparent;
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 5px;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 9px 10px;
+      margin: 0;
       cursor: pointer;
       background: #fff;
     }
     .card-row:hover { background: #f9fafb; }
     .card-row.active { border-color: #bfdbfe; background: var(--primary-soft); }
-    .card-row-title { display: flex; align-items: center; gap: 8px; font-weight: 750; }
+    .card-row-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 14px;
+      font-weight: 750;
+      min-width: 0;
+    }
+    .card-row-title > span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .card-row-meaning {
       color: var(--muted);
-      font-size: 13px;
-      margin-top: 5px;
+      font-size: 12px;
+      margin-top: 3px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -240,7 +258,7 @@
     .badge.Verb { background: var(--verb); }
     .badge.Adjektiv { background: var(--adjektiv); }
     .badge.Ausdruck { background: var(--ausdruck); }
-    .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
     .chip {
       border: 0;
       background: #f3f4f6;
@@ -325,9 +343,8 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     @media (max-width: 980px) {
-      .app { grid-template-columns: 210px minmax(300px, 1fr); }
-      .detail-pane { position: fixed; inset: 64px 0 0 0; z-index: 30; display: none; }
-      .detail-pane.mobile-open { display: block; }
+      .app { grid-template-columns: 220px minmax(0, 1fr); }
+      .card-list { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
     }
     @media (max-width: 680px) {
       .topbar { padding: 0 12px; }
@@ -336,9 +353,8 @@
       .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
       .sidebar .filters-collapsible { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
       .list-pane { border-right: 0; min-height: calc(100vh - 64px); }
+      .card-list { grid-template-columns: 1fr; }
       .grid-2 { grid-template-columns: 1fr; }
-      .detail-card { margin: 0; min-height: 100%; border: 0; border-radius: 0; }
-      .detail-head, .detail-body { padding-left: 20px; padding-right: 20px; }
     }
   </style>
 </head>
@@ -347,35 +363,34 @@
     <div class="brand">
       <div class="brand-mark">DE</div>
       <div>
-        <h1>나의 독일어 단어장</h1>
-        <small>Supabase 자동 저장</small>
+        <h1>Mein deutscher Wortschatz</h1>
+        <small>Automatisch in Supabase gespeichert</small>
       </div>
     </div>
     <div class="top-actions">
-      <span id="connectionPill" class="pill">로그인 필요</span>
-      <button id="closeDetailBtn" class="btn small hidden">목록으로</button>
-      <button id="logoutBtn" class="btn small hidden">로그아웃</button>
+      <span id="connectionPill" class="pill">Anmeldung erforderlich</span>
+      <button id="logoutBtn" class="btn small hidden">Abmelden</button>
     </div>
   </header>
 
   <section id="authView" class="auth-wrap">
     <div class="auth-card">
-      <h2>로그인</h2>
-      <p>같은 계정으로 로그인하면 어느 기기에서든 같은 단어장을 사용할 수 있어요.</p>
+      <h2>Anmelden</h2>
+      <p>Mit demselben Konto kannst du deinen Wortschatz auf allen Geräten verwenden.</p>
       <div class="field">
-        <label for="authEmail">이메일</label>
+        <label for="authEmail">E-Mail-Adresse</label>
         <input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com">
       </div>
       <div class="field">
-        <label for="authPassword">비밀번호</label>
-        <input id="authPassword" type="password" autocomplete="current-password" minlength="6" placeholder="6자 이상">
+        <label for="authPassword">Passwort</label>
+        <input id="authPassword" type="password" autocomplete="current-password" minlength="6" placeholder="Mindestens 6 Zeichen">
       </div>
       <div class="auth-buttons">
-        <button id="signInBtn" class="btn primary">로그인</button>
-        <button id="signUpBtn" class="btn">회원가입</button>
+        <button id="signInBtn" class="btn primary">Anmelden</button>
+        <button id="signUpBtn" class="btn">Registrieren</button>
       </div>
       <div id="authMessage" class="message">
-        처음이라면 회원가입을 누르세요. 이메일 확인이 켜져 있으면 받은 편지함에서 확인 링크를 눌러야 합니다.
+        Noch kein Konto? Klicke auf „Registrieren“. Falls die E-Mail-Bestätigung aktiviert ist, bestätige anschließend den Link in deinem Postfach.
       </div>
     </div>
   </section>
@@ -384,52 +399,45 @@
     <aside class="sidebar">
       <div class="search">
         <span>⌕</span>
-        <input id="searchInput" type="search" placeholder="독일어, 뜻, 예문 검색">
+        <input id="searchInput" type="search" placeholder="Deutsch, Bedeutung oder Beispielsatz">
       </div>
 
-      <button id="newCardBtn" class="btn primary" style="width:100%">＋ 새 단어</button>
+      <button id="newCardBtn" class="btn primary" style="width:100%">＋ Neues Wort</button>
 
-      <div class="section-title">품사</div>
+      <div class="section-title">Wortart</div>
       <div id="typeFilters" class="filters-collapsible"></div>
 
-      <div class="section-title">태그</div>
+      <div class="section-title">Tags</div>
       <div id="tagFilters"></div>
 
       <div class="sidebar-actions">
-        <button id="importSeedBtn" class="btn">기존 688개 가져오기</button>
-        <button id="exportJsonBtn" class="btn">JSON 백업</button>
-        <button id="exportCsvBtn" class="btn">CSV 백업</button>
-        <button id="refreshBtn" class="btn">새로고침</button>
+        <button id="importSeedBtn" class="btn">688 vorhandene Wörter importieren</button>
+        <button id="exportJsonBtn" class="btn">JSON-Sicherung</button>
+        <button id="exportCsvBtn" class="btn">CSV-Sicherung</button>
+        <button id="refreshBtn" class="btn">Aktualisieren</button>
       </div>
       <div class="sidebar-note">
-        “기존 688개 가져오기”는 현재 계정에 없는 단어만 추가합니다. 이미 있는 단어는 건너뜁니다.
+        Beim Import werden nur Wörter hinzugefügt, die in diesem Konto noch nicht vorhanden sind.
       </div>
     </aside>
 
     <section class="list-pane">
       <div class="list-header">
         <div class="list-header-row">
-          <h2 id="listTitle">전체 단어</h2>
+          <h2 id="listTitle">Alle Wörter</h2>
           <select id="sortSelect" class="sort-select">
-            <option value="german-asc">독일어 A–Z</option>
-            <option value="german-desc">독일어 Z–A</option>
-            <option value="newest">최근 추가</option>
-            <option value="updated">최근 수정</option>
+            <option value="german-asc">Deutsch A–Z</option>
+            <option value="german-desc">Deutsch Z–A</option>
+            <option value="newest">Neu hinzugefügt</option>
+            <option value="updated">Zuletzt bearbeitet</option>
           </select>
         </div>
-        <div id="listStatus" class="list-status">불러오는 중...</div>
+        <div id="listStatus" class="list-status">Wird geladen …</div>
       </div>
       <div id="cardList" class="card-list"></div>
     </section>
-
-    <section id="detailPane" class="detail-pane">
-      <div id="detailContent" class="detail-empty">
-        왼쪽 목록에서 단어를 선택하거나 새 단어를 추가하세요.
-      </div>
-    </section>
   </main>
 
-  <datalist id="tagSuggestions"></datalist>
   <div id="toast" class="toast"></div>
 
   <script>
@@ -455,7 +463,6 @@
     let session = null;
     let cards = [];
     let selectedId = null;
-    let editingId = null;
     let selectedType = "all";
     let selectedTag = "all";
     let searchTerm = "";
@@ -517,15 +524,15 @@
       const email = $("authEmail").value.trim();
       const password = $("authPassword").value;
       if (!email || !password) {
-        setAuthMessage("이메일과 비밀번호를 모두 입력하세요.", "error");
+        setAuthMessage("Bitte E-Mail-Adresse und Passwort eingeben.", "error");
         return;
       }
       setBusy(true);
-      setAuthMessage("로그인 중...");
+      setAuthMessage("Anmeldung läuft …");
       const { error } = await db.auth.signInWithPassword({ email, password });
       setBusy(false);
       if (error) {
-        setAuthMessage("로그인 실패: " + error.message, "error");
+        setAuthMessage("Anmeldung fehlgeschlagen: " + error.message, "error");
       }
     }
 
@@ -533,21 +540,21 @@
       const email = $("authEmail").value.trim();
       const password = $("authPassword").value;
       if (!email || password.length < 6) {
-        setAuthMessage("올바른 이메일과 6자 이상의 비밀번호를 입력하세요.", "error");
+        setAuthMessage("Bitte eine gültige E-Mail-Adresse und ein Passwort mit mindestens 6 Zeichen eingeben.", "error");
         return;
       }
       setBusy(true);
-      setAuthMessage("회원가입 중...");
+      setAuthMessage("Registrierung läuft …");
       const { data, error } = await db.auth.signUp({ email, password });
       setBusy(false);
       if (error) {
-        setAuthMessage("회원가입 실패: " + error.message, "error");
+        setAuthMessage("Registrierung fehlgeschlagen: " + error.message, "error");
         return;
       }
       if (data.session) {
-        setAuthMessage("회원가입과 로그인이 완료되었습니다.", "success");
+        setAuthMessage("Registrierung und Anmeldung wurden abgeschlossen.", "success");
       } else {
-        setAuthMessage("회원가입 요청이 완료되었습니다. 이메일 확인 링크를 누른 뒤 로그인하세요.", "success");
+        setAuthMessage("Die Registrierung wurde angefordert. Bitte bestätige den Link in der E-Mail und melde dich danach an.", "success");
       }
     }
 
@@ -561,7 +568,7 @@
       $("authView").classList.toggle("hidden", loggedIn);
       $("appView").classList.toggle("hidden", !loggedIn);
       $("logoutBtn").classList.toggle("hidden", !loggedIn);
-      $("connectionPill").textContent = loggedIn ? session.user.email : "로그인 필요";
+      $("connectionPill").textContent = loggedIn ? session.user.email : "Anmeldung erforderlich";
 
       if (loggedIn) {
         await loadCards();
@@ -593,18 +600,18 @@
 
     async function loadCards() {
       if (!session) return;
-      $("listStatus").textContent = "Supabase에서 불러오는 중...";
+      $("listStatus").textContent = "Wörter werden aus Supabase geladen …";
       try {
         cards = await fetchAllCards();
         if (selectedId && !cards.some(card => card.id === selectedId)) {
           selectedId = null;
         }
         renderAll();
-        $("connectionPill").textContent = `${session.user.email} · ${cards.length}개`;
+        $("connectionPill").textContent = `${session.user.email} · ${cards.length} Wörter`;
       } catch (error) {
         console.error(error);
-        $("listStatus").textContent = "불러오기 실패";
-        showToast("데이터를 불러오지 못했습니다: " + error.message, true);
+        $("listStatus").textContent = "Laden fehlgeschlagen";
+        showToast("Die Daten konnten nicht geladen werden: " + error.message, true);
       }
     }
 
@@ -651,7 +658,7 @@
 
       const buttons = [
         `<button class="filter-button ${selectedType === "all" ? "active" : ""}" data-type="all">
-          <span>전체</span><span class="count">${cards.length}</span>
+          <span>Alle</span><span class="count">${cards.length}</span>
         </button>`
       ];
       TYPE_ORDER.forEach(type => {
@@ -674,7 +681,7 @@
       const container = $("tagFilters");
       const buttons = [
         `<button class="filter-button ${selectedTag === "all" ? "active" : ""}" data-tag="all">
-          <span>모든 태그</span><span class="count">${cards.length}</span>
+          <span>Alle Tags</span><span class="count">${cards.length}</span>
         </button>`
       ];
       tags.forEach(([tag, count]) => {
@@ -701,12 +708,12 @@
       const titleParts = [];
       if (selectedType !== "all") titleParts.push(TYPE_LABELS[selectedType]);
       if (selectedTag !== "all") titleParts.push("#" + selectedTag);
-      $("listTitle").textContent = titleParts.length ? titleParts.join(" · ") : "전체 단어";
-      $("listStatus").textContent = `${result.length}개 표시 · 전체 ${cards.length}개`;
+      $("listTitle").textContent = titleParts.length ? titleParts.join(" · ") : "Alle Wörter";
+      $("listStatus").textContent = `${result.length} angezeigt · insgesamt ${cards.length}`;
 
       const container = $("cardList");
       if (!result.length) {
-        container.innerHTML = `<div class="detail-empty" style="min-height:240px">조건에 맞는 단어가 없습니다.</div>`;
+        container.innerHTML = `<div class="detail-empty" style="min-height:240px;grid-column:1/-1">Keine passenden Wörter gefunden.</div>`;
         return;
       }
 
@@ -716,9 +723,9 @@
             <span class="badge ${escapeHtml(card.word_type)}">${TYPE_LABELS[card.word_type] || escapeHtml(card.word_type)}</span>
             <span>${escapeHtml(card.german)}</span>
           </div>
-          <div class="card-row-meaning">${escapeHtml(card.meaning || "뜻 없음")}</div>
+          <div class="card-row-meaning">${escapeHtml(card.meaning || "Keine Bedeutung")}</div>
           ${(card.tags || []).length ? `<div class="chips">${
-            card.tags.slice(0, 4).map(tag => `<button class="chip" data-chip-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")
+            card.tags.slice(0, 3).map(tag => `<button class="chip" data-chip-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")
           }</div>` : ""}
         </article>
       `).join("");
@@ -733,230 +740,291 @@
             return;
           }
           selectedId = row.dataset.id;
-          editingId = null;
-          renderAll();
-          openDetailOnMobile();
+          renderList();
+          openDetailWindow(selectedId);
         });
       });
     }
+
 
     function currentCard() {
       return cards.find(card => card.id === selectedId) || null;
     }
 
-    function renderDetail() {
-      const container = $("detailContent");
-      const card = currentCard();
+    let cardWindow = null;
 
-      if (editingId !== null) {
-        renderEditor(editingId ? cards.find(item => item.id === editingId) : null);
-        return;
+    const POPUP_CSS = `
+      :root {
+        --line:#e5e7eb;--text:#22252a;--muted:#6b7280;--primary:#2563eb;
+        --danger:#dc2626;--der:#2563eb;--die:#dc2626;--das:#16a34a;
+        --verb:#ea580c;--adjektiv:#7c3aed;--ausdruck:#ca8a04;
       }
+      *{box-sizing:border-box}
+      body{margin:0;background:#f5f6f8;color:var(--text);
+        font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+      button,input,textarea,select{font:inherit}
+      button{cursor:pointer}
+      .wrap{max-width:760px;margin:0 auto;padding:20px}
+      .card,.editor{background:#fff;border:1px solid var(--line);border-radius:18px;
+        box-shadow:0 4px 18px rgba(0,0,0,.07);overflow:hidden}
+      .head{padding:28px 30px 24px;border-bottom:1px solid var(--line)}
+      h1{margin:0 0 14px;font-size:clamp(34px,7vw,56px);font-weight:500;line-height:1.08}
+      h2{margin:0 0 20px}
+      .body{padding:26px 30px 30px}
+      .section{margin-bottom:22px}
+      .label{font-weight:800;margin-bottom:7px}
+      .value{white-space:pre-wrap;line-height:1.65}
+      .extra{margin-top:16px;white-space:pre-wrap;line-height:1.55}
+      .badge{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;
+        font-size:11px;font-weight:800;color:#fff}
+      .badge.der{background:var(--der)}.badge.die{background:var(--die)}
+      .badge.das{background:var(--das)}.badge.Verb{background:var(--verb)}
+      .badge.Adjektiv{background:var(--adjektiv)}.badge.Ausdruck{background:var(--ausdruck)}
+      .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+      .chip{background:#f3f4f6;color:#4b5563;padding:5px 8px;border-radius:999px;font-size:12px}
+      .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+      .btn{border:1px solid var(--line);background:#fff;color:var(--text);
+        padding:9px 13px;border-radius:10px;font-weight:700}
+      .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+      .btn.danger{color:var(--danger);border-color:#fecaca}
+      .editor{padding:25px}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+      .field{margin-bottom:14px}
+      .field label{display:block;font-size:13px;font-weight:750;margin-bottom:6px}
+      .field input,.field textarea,.field select{width:100%;border:1px solid #d1d5db;
+        border-radius:10px;padding:10px 11px;background:#fff;outline:none}
+      .field input:focus,.field textarea:focus,.field select:focus{
+        border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+      .field textarea{min-height:90px;resize:vertical}
+      .hint{color:var(--muted);font-size:12px;margin-top:5px}
+      .editor-actions{display:flex;justify-content:flex-end;gap:8px}
+      @media(max-width:560px){.wrap{padding:0}.card,.editor{border-radius:0;border:0;min-height:100vh}
+        .head,.body,.editor{padding-left:20px;padding-right:20px}.grid{grid-template-columns:1fr}}
+    `;
 
-      if (!card) {
-        container.className = "detail-empty";
-        container.innerHTML = "왼쪽 목록에서 단어를 선택하거나 새 단어를 추가하세요.";
-        return;
+    function ensureCardWindow(title) {
+      if (!cardWindow || cardWindow.closed) {
+        cardWindow = window.open(
+          "",
+          "germanVocabCardWindow",
+          "popup=yes,width=760,height=860,resizable=yes,scrollbars=yes"
+        );
       }
-
-      container.className = "";
-      container.innerHTML = `
-        <article class="detail-card">
-          <div class="detail-head">
-            <h2 class="detail-title">${escapeHtml(card.german)}</h2>
-            <span class="badge ${escapeHtml(card.word_type)}">${TYPE_LABELS[card.word_type] || escapeHtml(card.word_type)}</span>
-            ${card.extra2 ? `<div class="detail-extra"><strong>추가 정보:</strong><br>${escapeHtml(card.extra2)}</div>` : ""}
-            ${(card.tags || []).length ? `<div class="chips">${
-              card.tags.map(tag => `<button class="chip" data-detail-tag="${escapeHtml(tag)}">#${escapeHtml(tag)}</button>`).join("")
-            }</div>` : ""}
-          </div>
-          <div class="detail-body">
-            <div class="detail-section">
-              <div class="detail-label">뜻</div>
-              <div class="detail-value">${escapeHtml(card.meaning || "—")}</div>
-            </div>
-            <div class="detail-section">
-              <div class="detail-label">예문</div>
-              <div class="detail-value">${escapeHtml(card.example_de || "—")}</div>
-            </div>
-            <div class="detail-section">
-              <div class="detail-label">예문 해석</div>
-              <div class="detail-value">${escapeHtml(card.example_translation || "—")}</div>
-            </div>
-            ${card.notes ? `<div class="detail-section">
-              <div class="detail-label">메모</div>
-              <div class="detail-value">${escapeHtml(card.notes)}</div>
-            </div>` : ""}
-            <div class="detail-actions">
-              <button id="editCardBtn" class="btn primary">수정</button>
-              <button id="deleteCardBtn" class="btn danger">삭제</button>
-            </div>
-          </div>
-        </article>
-      `;
-
-      $("editCardBtn").addEventListener("click", () => {
-        editingId = card.id;
-        renderDetail();
-      });
-      $("deleteCardBtn").addEventListener("click", deleteSelectedCard);
-      container.querySelectorAll("[data-detail-tag]").forEach(button => {
-        button.addEventListener("click", () => {
-          selectedTag = button.dataset.detailTag;
-          closeDetailOnMobile();
-          renderAll();
-        });
-      });
+      if (!cardWindow) {
+        showToast("Das Pop-up wurde blockiert. Bitte Pop-ups für diese Seite erlauben.", true);
+        return null;
+      }
+      cardWindow.document.open();
+      cardWindow.document.write(`<!doctype html>
+        <html lang="de"><head><meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>${escapeHtml(title)}</title><style>${POPUP_CSS}</style></head>
+        <body><main id="popupRoot"></main></body></html>`);
+      cardWindow.document.close();
+      cardWindow.focus();
+      return cardWindow;
     }
 
-    function renderEditor(card) {
-      const container = $("detailContent");
+    function openDetailWindow(cardId) {
+      const card = cards.find(item => item.id === cardId);
+      if (!card) return;
+      selectedId = cardId;
+
+      const win = ensureCardWindow(card.german);
+      if (!win) return;
+
+      const tags = (card.tags || [])
+        .map(tag => `<span class="chip">#${escapeHtml(tag)}</span>`)
+        .join("");
+
+      win.document.getElementById("popupRoot").innerHTML = `
+        <div class="wrap">
+          <article class="card">
+            <div class="head">
+              <h1>${escapeHtml(card.german)}</h1>
+              <span class="badge ${escapeHtml(card.word_type)}">${TYPE_LABELS[card.word_type] || escapeHtml(card.word_type)}</span>
+              ${card.extra2 ? `<div class="extra"><strong>Zusatzinformationen:</strong><br>${escapeHtml(card.extra2)}</div>` : ""}
+              ${tags ? `<div class="chips">${tags}</div>` : ""}
+            </div>
+            <div class="body">
+              <div class="section">
+                <div class="label">Bedeutung</div>
+                <div class="value">${escapeHtml(card.meaning || "—")}</div>
+              </div>
+              <div class="section">
+                <div class="label">Beispielsatz</div>
+                <div class="value">${escapeHtml(card.example_de || "—")}</div>
+              </div>
+              <div class="section">
+                <div class="label">Übersetzung</div>
+                <div class="value">${escapeHtml(card.example_translation || "—")}</div>
+              </div>
+              ${card.notes ? `<div class="section">
+                <div class="label">Notizen</div>
+                <div class="value">${escapeHtml(card.notes)}</div>
+              </div>` : ""}
+              <div class="actions">
+                <button class="btn primary" onclick="window.opener.openEditorWindow('${card.id}')">Bearbeiten</button>
+                <button class="btn danger" onclick="window.opener.deleteCardFromPopup('${card.id}')">Löschen</button>
+                <button class="btn" onclick="window.close()">Schließen</button>
+              </div>
+            </div>
+          </article>
+        </div>`;
+    }
+
+    function openEditorWindow(cardId = null) {
+      const card = cardId ? cards.find(item => item.id === cardId) : null;
       const isNew = !card;
-      container.className = "";
-      container.innerHTML = `
-        <div class="editor-wrap">
-          <form id="cardForm" class="editor">
-            <h2>${isNew ? "새 단어" : "단어 수정"}</h2>
-            <div class="grid-2">
+      const win = ensureCardWindow(isNew ? "Neues Wort" : card.german);
+      if (!win) return;
+
+      const tagOptions = getAllTags()
+        .map(([tag]) => `<option value="${escapeHtml(tag)}"></option>`)
+        .join("");
+
+      win.document.getElementById("popupRoot").innerHTML = `
+        <div class="wrap">
+          <form id="popupCardForm" class="editor">
+            <h2>${isNew ? "Neues Wort" : "Wort bearbeiten"}</h2>
+            <div class="grid">
               <div class="field">
-                <label for="editGerman">Deutsch *</label>
-                <input id="editGerman" required value="${escapeHtml(card?.german || "")}" placeholder="예: das Urlaubsziel">
+                <label for="popupGerman">Deutsch *</label>
+                <input id="popupGerman" required value="${escapeHtml(card?.german || "")}" placeholder="z. B. das Urlaubsziel">
               </div>
               <div class="field">
-                <label for="editType">품사 *</label>
-                <select id="editType" required>
+                <label for="popupType">Wortart *</label>
+                <select id="popupType" required>
                   ${TYPE_ORDER.map(type => `<option value="${type}" ${card?.word_type === type ? "selected" : ""}>${TYPE_LABELS[type]}</option>`).join("")}
                 </select>
               </div>
             </div>
             <div class="field">
-              <label for="editExtra2">Extra2</label>
-              <input id="editExtra2" value="${escapeHtml(card?.extra2 || "")}" placeholder="명사: die Urlaubsziele / 동사: entschloss / entschlossen">
+              <label for="popupExtra2">Zusatzinformationen</label>
+              <input id="popupExtra2" value="${escapeHtml(card?.extra2 || "")}" placeholder="Nomen: die Urlaubsziele / Verb: entschloss / entschlossen">
             </div>
             <div class="field">
-              <label for="editMeaning">스페인어 뜻</label>
-              <input id="editMeaning" value="${escapeHtml(card?.meaning || "")}" placeholder="el destino de vacaciones">
+              <label for="popupMeaning">Spanische Bedeutung</label>
+              <input id="popupMeaning" value="${escapeHtml(card?.meaning || "")}" placeholder="el destino de vacaciones">
             </div>
             <div class="field">
-              <label for="editExampleDe">독일어 예문</label>
-              <textarea id="editExampleDe">${escapeHtml(card?.example_de || "")}</textarea>
+              <label for="popupExampleDe">Deutscher Beispielsatz</label>
+              <textarea id="popupExampleDe">${escapeHtml(card?.example_de || "")}</textarea>
             </div>
             <div class="field">
-              <label for="editExampleTranslation">스페인어 예문 해석</label>
-              <textarea id="editExampleTranslation">${escapeHtml(card?.example_translation || "")}</textarea>
+              <label for="popupExampleTranslation">Spanische Übersetzung</label>
+              <textarea id="popupExampleTranslation">${escapeHtml(card?.example_translation || "")}</textarea>
             </div>
             <div class="field">
-              <label for="editTags">태그</label>
-              <input id="editTags" list="tagSuggestions" value="${escapeHtml((card?.tags || []).join(", "))}" placeholder="여행, 수업, 뉴스">
-              <div class="hint">쉼표로 여러 태그를 구분하세요.</div>
+              <label for="popupTags">Tags</label>
+              <input id="popupTags" list="popupTagSuggestions" value="${escapeHtml((card?.tags || []).join(", "))}" placeholder="Reisen, Unterricht, Nachrichten">
+              <datalist id="popupTagSuggestions">${tagOptions}</datalist>
+              <div class="hint">Mehrere Tags mit Kommas trennen.</div>
             </div>
             <div class="field">
-              <label for="editNotes">메모</label>
-              <textarea id="editNotes">${escapeHtml(card?.notes || "")}</textarea>
+              <label for="popupNotes">Notizen</label>
+              <textarea id="popupNotes">${escapeHtml(card?.notes || "")}</textarea>
             </div>
             <div class="editor-actions">
-              <button type="button" id="cancelEditBtn" class="btn">취소</button>
-              <button type="submit" class="btn primary">${isNew ? "저장" : "변경 저장"}</button>
+              <button type="button" class="btn" id="popupCancelBtn">Abbrechen</button>
+              <button type="submit" class="btn primary">${isNew ? "Speichern" : "Änderungen speichern"}</button>
             </div>
           </form>
-        </div>
-      `;
-      $("cancelEditBtn").addEventListener("click", () => {
-        editingId = null;
-        if (isNew) selectedId = null;
-        renderDetail();
+        </div>`;
+
+      win.document.getElementById("popupCardForm").addEventListener("submit", event => {
+        event.preventDefault();
+        window.saveCardFromPopup(card?.id || null);
       });
-      $("cardForm").addEventListener("submit", saveEditor);
+      win.document.getElementById("popupCancelBtn").addEventListener("click", () => {
+        if (card?.id) openDetailWindow(card.id);
+        else win.close();
+      });
+      win.document.getElementById("popupGerman").focus();
     }
 
-    async function saveEditor(event) {
-      event.preventDefault();
-      if (busy) return;
-
-      const german = $("editGerman").value.trim();
+    async function saveCardFromPopup(cardId) {
+      if (!cardWindow || cardWindow.closed || busy) return;
+      const doc = cardWindow.document;
+      const german = doc.getElementById("popupGerman").value.trim();
       const normalized = normalizeGerman(german);
+
       if (!german) {
-        showToast("독일어 표제어를 입력하세요.", true);
+        cardWindow.alert("Bitte ein deutsches Stichwort eingeben.");
         return;
       }
 
       const duplicate = cards.find(card =>
-        card.id !== editingId && normalizeGerman(card.german) === normalized
+        card.id !== cardId && normalizeGerman(card.german) === normalized
       );
       if (duplicate) {
-        showToast(`이미 등록된 단어입니다: ${duplicate.german}`, true);
+        cardWindow.alert(`Dieses Wort ist bereits vorhanden: ${duplicate.german}`);
         return;
       }
 
       const payload = {
         german,
         normalized_german: normalized,
-        word_type: $("editType").value,
-        extra2: $("editExtra2").value.trim(),
-        meaning: $("editMeaning").value.trim(),
-        example_de: $("editExampleDe").value.trim(),
-        example_translation: $("editExampleTranslation").value.trim(),
-        tags: parseTags($("editTags").value),
-        notes: $("editNotes").value.trim()
+        word_type: doc.getElementById("popupType").value,
+        extra2: doc.getElementById("popupExtra2").value.trim(),
+        meaning: doc.getElementById("popupMeaning").value.trim(),
+        example_de: doc.getElementById("popupExampleDe").value.trim(),
+        example_translation: doc.getElementById("popupExampleTranslation").value.trim(),
+        tags: parseTags(doc.getElementById("popupTags").value),
+        notes: doc.getElementById("popupNotes").value.trim()
       };
 
       setBusy(true);
       try {
-        const wasEditing = Boolean(editingId);
         let response;
-        if (editingId) {
-          response = await db
-            .from(TABLE)
-            .update(payload)
-            .eq("id", editingId)
-            .select()
-            .single();
+        if (cardId) {
+          response = await db.from(TABLE).update(payload).eq("id", cardId).select().single();
         } else {
-          response = await db
-            .from(TABLE)
-            .insert(payload)
-            .select()
-            .single();
+          response = await db.from(TABLE).insert(payload).select().single();
         }
         if (response.error) throw response.error;
 
         selectedId = response.data.id;
-        editingId = null;
         await loadCards();
-        showToast(wasEditing ? "수정했습니다." : "저장했습니다.");
+        showToast(cardId ? "Das Wort wurde aktualisiert." : "Das Wort wurde gespeichert.");
+        openDetailWindow(response.data.id);
       } catch (error) {
         console.error(error);
         const message = String(error.message || error);
         if (message.includes("german_vocab_cards_unique_word") || message.includes("duplicate key")) {
-          showToast("같은 단어가 이미 등록되어 있습니다.", true);
+          showToast("Dieses Wort ist bereits vorhanden.", true);
         } else {
-          showToast("저장 실패: " + message, true);
+          showToast("Speichern fehlgeschlagen: " + message, true);
         }
       } finally {
         setBusy(false);
       }
     }
 
-    async function deleteSelectedCard() {
-      const card = currentCard();
+    async function deleteCardFromPopup(cardId) {
+      const card = cards.find(item => item.id === cardId);
       if (!card) return;
-      if (!confirm(`“${card.german}”을 삭제할까요?`)) return;
+      const confirmed = cardWindow && !cardWindow.closed
+        ? cardWindow.confirm(`„${card.german}“ wirklich löschen?`)
+        : confirm(`„${card.german}“ wirklich löschen?`);
+      if (!confirmed) return;
 
       setBusy(true);
       const { error } = await db.from(TABLE).delete().eq("id", card.id);
       setBusy(false);
       if (error) {
-        showToast("삭제 실패: " + error.message, true);
+        showToast("Löschen fehlgeschlagen: " + error.message, true);
         return;
       }
       selectedId = null;
+      if (cardWindow && !cardWindow.closed) cardWindow.close();
       await loadCards();
-      showToast("삭제했습니다.");
+      showToast("Das Wort wurde gelöscht.");
     }
 
     async function importSeedCards() {
       if (!session?.user || busy) return;
-      if (!confirm(`기존 단어 ${SEED_CARDS.length}개 중 현재 계정에 없는 단어만 가져올까요?`)) return;
+      if (!confirm(`Nur die noch nicht vorhandenen Wörter aus insgesamt ${SEED_CARDS.length} Einträgen importieren?`)) return;
 
       setBusy(true);
       try {
@@ -969,26 +1037,26 @@
           }));
 
         if (!pending.length) {
-          showToast("가져올 새 단어가 없습니다.");
+          showToast("Es gibt keine neuen Wörter zum Importieren.");
           return;
         }
 
         const chunkSize = 75;
         for (let i = 0; i < pending.length; i += chunkSize) {
           const chunk = pending.slice(i, i + chunkSize);
-          $("connectionPill").textContent = `가져오는 중 ${Math.min(i + chunk.length, pending.length)}/${pending.length}`;
+          $("connectionPill").textContent = `Import ${Math.min(i + chunk.length, pending.length)}/${pending.length}`;
           const { error } = await db.from(TABLE).insert(chunk);
           if (error) throw error;
         }
 
         await loadCards();
-        showToast(`${pending.length}개 단어를 가져왔습니다.`);
+        showToast(`${pending.length} Wörter wurden importiert.`);
       } catch (error) {
         console.error(error);
-        showToast("가져오기 실패: " + error.message, true);
+        showToast("Import fehlgeschlagen: " + error.message, true);
       } finally {
         setBusy(false);
-        if (session) $("connectionPill").textContent = `${session.user.email} · ${cards.length}개`;
+        if (session) $("connectionPill").textContent = `${session.user.email} · ${cards.length} Wörter`;
       }
     }
 
@@ -1037,29 +1105,13 @@
       renderTypeFilters();
       renderTagFilters();
       renderList();
-      renderDetail();
-    }
-
-    function openDetailOnMobile() {
-      if (window.innerWidth <= 980) {
-        $("detailPane").classList.add("mobile-open");
-        $("closeDetailBtn").classList.remove("hidden");
-      }
-    }
-
-    function closeDetailOnMobile() {
-      $("detailPane").classList.remove("mobile-open");
-      $("closeDetailBtn").classList.add("hidden");
     }
 
     $("signInBtn").addEventListener("click", signIn);
     $("signUpBtn").addEventListener("click", signUp);
     $("logoutBtn").addEventListener("click", signOut);
     $("newCardBtn").addEventListener("click", () => {
-      selectedId = null;
-      editingId = "";
-      renderDetail();
-      openDetailOnMobile();
+      openEditorWindow(null);
     });
     $("searchInput").addEventListener("input", event => {
       searchTerm = event.target.value.trim().toLowerCase();
@@ -1070,7 +1122,6 @@
     $("exportJsonBtn").addEventListener("click", exportJson);
     $("exportCsvBtn").addEventListener("click", exportCsv);
     $("refreshBtn").addEventListener("click", loadCards);
-    $("closeDetailBtn").addEventListener("click", closeDetailOnMobile);
 
     db.auth.onAuthStateChange((_event, nextSession) => {
       handleSession(nextSession);
