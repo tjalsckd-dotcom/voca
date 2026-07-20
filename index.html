@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mein deutscher Wortschatz · FINAL v9</title>
+  <title>Mein deutscher Wortschatz · FINAL v11</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -693,7 +693,7 @@
       <div class="brand-mark">DE</div>
       <div>
         <h1>Mein deutscher Wortschatz</h1>
-        <small>Supabase · FINAL v9</small>
+        <small>Supabase · FINAL v11</small>
       </div>
     </div>
     <div class="top-actions">
@@ -937,8 +937,73 @@
 
     const $ = (id) => document.getElementById(id);
 
+    function normalizeGermanForStorage(value) {
+      return String(value ?? "")
+        .normalize("NFC")
+        .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]/gu, " ")
+        .replace(/[\u200B-\u200D\u2060\uFEFF]/gu, "")
+        .trim()
+        .replace(/\s+/gu, " ");
+    }
+
     function normalizeGerman(value) {
-      return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+      return normalizeGermanForStorage(value).toLocaleLowerCase("de-DE");
+    }
+
+    function normalizeGermanSimilarity(value) {
+      return normalizeGerman(value)
+        .replace(/[‐‑‒–—―-]+/gu, " ")
+        .replace(/[’‘‚‛`´']/gu, "")
+        .replace(/[.,;:!?()[\]{}"„“«»]/gu, " ")
+        .replace(/\s+/gu, " ")
+        .trim();
+    }
+
+    function differsByOneSimpleEdit(left, right) {
+      const a = Array.from(left);
+      const b = Array.from(right);
+
+      if (Math.abs(a.length - b.length) > 1) return false;
+
+      if (a.length === b.length) {
+        const differences = [];
+        for (let index = 0; index < a.length; index += 1) {
+          if (a[index] !== b[index]) differences.push(index);
+          if (differences.length > 2) return false;
+        }
+
+        if (differences.length === 1) return true;
+
+        if (differences.length === 2) {
+          const [first, second] = differences;
+          return (
+            second === first + 1 &&
+            a[first] === b[second] &&
+            a[second] === b[first]
+          );
+        }
+
+        return false;
+      }
+
+      const shorter = a.length < b.length ? a : b;
+      const longer = a.length < b.length ? b : a;
+      let shortIndex = 0;
+      let longIndex = 0;
+      let skipped = false;
+
+      while (shortIndex < shorter.length && longIndex < longer.length) {
+        if (shorter[shortIndex] === longer[longIndex]) {
+          shortIndex += 1;
+          longIndex += 1;
+        } else {
+          if (skipped) return false;
+          skipped = true;
+          longIndex += 1;
+        }
+      }
+
+      return true;
     }
 
     function escapeHtml(value) {
@@ -1231,6 +1296,13 @@
     }
 
     let cardWindow = null;
+    let popupDuplicateState = {
+      cardId: null,
+      originalKey: "",
+      checkedKey: "",
+      passed: false,
+      busy: false
+    };
 
     const POPUP_CSS = `
       :root {
@@ -1295,9 +1367,36 @@
       }
       .tag-count{color:#9ca3af;margin-left:4px}
       .tag-empty{color:var(--muted);font-size:12px}
+      .btn:disabled{opacity:.5;cursor:not-allowed}
+      .duplicate-inline{
+        display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+        margin-top:7px
+      }
+      .duplicate-inline .btn{
+        padding:6px 10px;font-size:12px;white-space:nowrap
+      }
+      .duplicate-status{
+        flex:1 1 180px;
+        font-size:11px;line-height:1.4;color:var(--muted)
+      }
+      .duplicate-status.pending{color:#92400e}
+      .duplicate-status.ok{color:#166534;font-weight:750}
+      .duplicate-status.warn{color:#92400e;font-weight:750}
+      .duplicate-status.error{color:#b91c1c;font-weight:750}
+      .duplicate-results{
+        display:grid;gap:6px;margin-top:7px
+      }
+      .duplicate-candidate{
+        padding:7px 8px;border:1px solid #e5e7eb;border-radius:8px;background:#fff
+      }
+      .duplicate-candidate strong{display:block;font-size:12px}
+      .duplicate-candidate span{
+        display:block;margin-top:2px;color:var(--muted);font-size:10px;line-height:1.35
+      }
       .editor-actions{display:flex;justify-content:flex-end;gap:8px}
       @media(max-width:560px){.wrap{padding:0}.card,.editor{border-radius:0;border:0;min-height:100vh}
-        .head,.body,.editor{padding-left:20px;padding-right:20px}.grid{grid-template-columns:1fr}}
+        .head,.body,.editor{padding-left:20px;padding-right:20px}.grid{grid-template-columns:1fr}
+        .duplicate-inline{align-items:flex-start}.duplicate-status{flex-basis:100%}}
     `;
 
     function ensureCardWindow(title) {
@@ -1385,7 +1484,16 @@
               <div class="field">
                 <label for="popupGerman">Deutsch *</label>
                 <input id="popupGerman" required value="${escapeHtml(card?.german || "")}" placeholder="z. B. das Urlaubsziel">
+
+                <div class="duplicate-inline">
+                  <button type="button" class="btn" id="popupDuplicateCheckBtn">
+                    Duplikat prüfen
+                  </button>
+                  <span id="popupDuplicateStatus" class="duplicate-status"></span>
+                </div>
+                <div id="popupDuplicateResults" class="duplicate-results"></div>
               </div>
+
               <div class="field">
                 <label for="popupType">Wortart *</label>
                 <select id="popupType" required>
@@ -1393,6 +1501,7 @@
                 </select>
               </div>
             </div>
+
             <div class="field">
               <label for="popupExtra2">Zusatzinformationen</label>
               <input id="popupExtra2" value="${escapeHtml(card?.extra2 || "")}" placeholder="Nomen: die Urlaubsziele / Verb: entschloss / entschlossen">
@@ -1424,7 +1533,12 @@
             </div>
             <div class="editor-actions">
               <button type="button" class="btn" id="popupCancelBtn">Abbrechen</button>
-              <button type="submit" class="btn primary">${isNew ? "Speichern" : "Änderungen speichern"}</button>
+              <button
+                type="submit"
+                class="btn primary"
+                id="popupSaveBtn"
+                ${isNew ? "disabled" : ""}
+              >${isNew ? "Speichern" : "Änderungen speichern"}</button>
             </div>
           </form>
         </div>`;
@@ -1438,7 +1552,74 @@
         else win.close();
       });
       setupPopupTagRecommendations(win);
+      setupPopupDuplicateCheck(win, card);
       win.document.getElementById("popupGerman").focus();
+    }
+
+    function setupPopupDuplicateCheck(win, card) {
+      const doc = win.document;
+      const germanInput = doc.getElementById("popupGerman");
+      const checkButton = doc.getElementById("popupDuplicateCheckBtn");
+      const saveButton = doc.getElementById("popupSaveBtn");
+      const status = doc.getElementById("popupDuplicateStatus");
+      const results = doc.getElementById("popupDuplicateResults");
+
+      if (!germanInput || !checkButton || !saveButton || !status || !results) return;
+
+      const originalKey = card ? normalizeGerman(card.german) : "";
+
+      popupDuplicateState = {
+        cardId: card?.id || null,
+        originalKey,
+        checkedKey: originalKey,
+        passed: Boolean(card),
+        busy: false
+      };
+
+      function renderInitialState() {
+        results.innerHTML = "";
+
+        if (card) {
+          status.className = "duplicate-status ok";
+          status.textContent =
+            "Das Stichwort ist unverändert. Eine neue Prüfung ist erst nach einer Änderung erforderlich.";
+          saveButton.disabled = false;
+        } else {
+          status.className = "duplicate-status pending";
+          status.textContent =
+            "Vor dem Speichern bitte einmal auf „Duplikat prüfen“ klicken.";
+          saveButton.disabled = true;
+        }
+      }
+
+      function invalidateCheck() {
+        const currentKey = normalizeGerman(germanInput.value);
+        results.innerHTML = "";
+
+        if (card && currentKey === originalKey) {
+          popupDuplicateState.checkedKey = originalKey;
+          popupDuplicateState.passed = true;
+          status.className = "duplicate-status ok";
+          status.textContent =
+            "Das ursprüngliche Stichwort ist wiederhergestellt. Keine neue Prüfung erforderlich.";
+          saveButton.disabled = false;
+          return;
+        }
+
+        popupDuplicateState.checkedKey = "";
+        popupDuplicateState.passed = false;
+        status.className = "duplicate-status pending";
+        status.textContent =
+          "Das Stichwort wurde geändert. Bitte die Duplikatprüfung erneut ausführen.";
+        saveButton.disabled = true;
+      }
+
+      germanInput.addEventListener("input", invalidateCheck);
+      checkButton.addEventListener("click", () => {
+        window.checkDuplicateFromPopup(card?.id || null);
+      });
+
+      renderInitialState();
     }
 
     function setupPopupTagRecommendations(win) {
@@ -1517,24 +1698,210 @@
       renderRecommendations();
     }
 
-    async function saveCardFromPopup(cardId) {
-      if (!cardWindow || cardWindow.closed || busy) return;
+    function getPotentialDuplicateReason(enteredGerman, candidate, selectedType) {
+      const enteredKey = normalizeGerman(enteredGerman);
+      const candidateKey = normalizeGerman(candidate.german);
+
+      if (!enteredKey || enteredKey === candidateKey) return "";
+
+      const enteredSimilarity = normalizeGermanSimilarity(enteredGerman);
+      const candidateSimilarity = normalizeGermanSimilarity(candidate.german);
+
+      if (
+        enteredSimilarity &&
+        enteredSimilarity === candidateSimilarity
+      ) {
+        return "Nur Satzzeichen, Apostroph oder Bindestrich unterscheiden sich.";
+      }
+
+      if (
+        candidate.word_type === selectedType &&
+        Math.min(enteredKey.length, candidateKey.length) >= 6 &&
+        differsByOneSimpleEdit(enteredKey, candidateKey)
+      ) {
+        return "Nur ein Zeichen oder eine benachbarte Buchstabenfolge unterscheidet sich.";
+      }
+
+      return "";
+    }
+
+    function renderDuplicateCandidates(doc, candidates) {
+      const results = doc.getElementById("popupDuplicateResults");
+      if (!results) return;
+
+      results.innerHTML = candidates.slice(0, 8).map(candidate => `
+        <div class="duplicate-candidate">
+          <strong>${escapeHtml(candidate.german)}</strong>
+          <span>
+            ${escapeHtml(TYPE_LABELS[candidate.word_type] || candidate.word_type || "")}
+            ${candidate.meaning ? " · " + escapeHtml(candidate.meaning) : ""}
+            ${candidate.reason ? "<br>" + escapeHtml(candidate.reason) : ""}
+          </span>
+        </div>
+      `).join("");
+    }
+
+    async function checkDuplicateFromPopup(cardId) {
+      if (
+        !cardWindow ||
+        cardWindow.closed ||
+        popupDuplicateState.busy ||
+        busy
+      ) return;
+
       const doc = cardWindow.document;
-      const german = doc.getElementById("popupGerman").value.trim();
+      const germanInput = doc.getElementById("popupGerman");
+      const typeInput = doc.getElementById("popupType");
+      const checkButton = doc.getElementById("popupDuplicateCheckBtn");
+      const saveButton = doc.getElementById("popupSaveBtn");
+      const status = doc.getElementById("popupDuplicateStatus");
+      const results = doc.getElementById("popupDuplicateResults");
+
+      if (!germanInput || !typeInput || !checkButton || !saveButton || !status || !results) return;
+
+      const cleanedGerman = normalizeGermanForStorage(germanInput.value);
+      const normalized = normalizeGerman(cleanedGerman);
+      const selectedType = typeInput.value;
+
+      if (!cleanedGerman) {
+        status.className = "duplicate-status error";
+        status.textContent = "Bitte zuerst ein deutsches Stichwort eingeben.";
+        results.innerHTML = "";
+        saveButton.disabled = true;
+        germanInput.focus();
+        return;
+      }
+
+      popupDuplicateState.busy = true;
+      popupDuplicateState.passed = false;
+      popupDuplicateState.checkedKey = "";
+      checkButton.disabled = true;
+      saveButton.disabled = true;
+      status.className = "duplicate-status pending";
+      status.textContent = "Die aktuellen Einträge in Supabase werden geprüft …";
+      results.innerHTML = "";
+
+      try {
+        // 매번 Supabase에서 전체 목록을 다시 가져와 다른 탭/기기의 최신 추가도 확인합니다.
+        const freshCards = await fetchAllCards();
+        const otherCards = freshCards.filter(card => card.id !== cardId);
+
+        const exactDuplicates = otherCards.filter(card =>
+          normalizeGerman(card.german) === normalized
+        );
+
+        if (exactDuplicates.length) {
+          popupDuplicateState.checkedKey = normalized;
+          popupDuplicateState.passed = false;
+          status.className = "duplicate-status error";
+          status.textContent =
+            "Exaktes Duplikat gefunden. Speichern bleibt gesperrt.";
+          renderDuplicateCandidates(doc, exactDuplicates.map(card => ({
+            ...card,
+            reason: "Gleiche Schreibweise nach Groß-/Kleinschreibung, Unicode- und Leerzeichenbereinigung."
+          })));
+          return;
+        }
+
+        const potentialDuplicates = otherCards
+          .map(card => ({
+            ...card,
+            reason: getPotentialDuplicateReason(cleanedGerman, card, selectedType)
+          }))
+          .filter(card => card.reason)
+          .sort((left, right) => {
+            const sameTypeLeft = left.word_type === selectedType ? 1 : 0;
+            const sameTypeRight = right.word_type === selectedType ? 1 : 0;
+            return sameTypeRight - sameTypeLeft ||
+              left.german.localeCompare(right.german, "de");
+          });
+
+        popupDuplicateState.checkedKey = normalized;
+        popupDuplicateState.passed = true;
+        germanInput.value = cleanedGerman;
+        saveButton.disabled = false;
+
+        if (potentialDuplicates.length) {
+          status.className = "duplicate-status warn";
+          status.textContent =
+            "Kein exaktes Duplikat. Ähnliche Einträge wurden gefunden; bitte kurz prüfen.";
+          renderDuplicateCandidates(doc, potentialDuplicates);
+        } else {
+          status.className = "duplicate-status ok";
+          status.textContent =
+            "Kein Duplikat gefunden. Speichern ist freigegeben.";
+          results.innerHTML = "";
+        }
+      } catch (error) {
+        console.error(error);
+        popupDuplicateState.checkedKey = "";
+        popupDuplicateState.passed = false;
+        status.className = "duplicate-status error";
+        status.textContent =
+          "Duplikatprüfung fehlgeschlagen: " + (error.message || error);
+        results.innerHTML = "";
+        saveButton.disabled = true;
+      } finally {
+        popupDuplicateState.busy = false;
+        checkButton.disabled = false;
+      }
+    }
+
+    async function saveCardFromPopup(cardId) {
+      if (
+        !cardWindow ||
+        cardWindow.closed ||
+        busy ||
+        popupDuplicateState.busy
+      ) return;
+
+      const doc = cardWindow.document;
+      const german = normalizeGermanForStorage(
+        doc.getElementById("popupGerman").value
+      );
       const normalized = normalizeGerman(german);
+      const originalUnchanged = Boolean(
+        cardId &&
+        popupDuplicateState.cardId === cardId &&
+        normalized === popupDuplicateState.originalKey
+      );
+      const explicitCheckPassed = Boolean(
+        popupDuplicateState.passed &&
+        popupDuplicateState.checkedKey === normalized
+      );
 
       if (!german) {
         cardWindow.alert("Bitte ein deutsches Stichwort eingeben.");
         return;
       }
 
+      if (!originalUnchanged && !explicitCheckPassed) {
+        cardWindow.alert(
+          "Bitte vor dem Speichern einmal auf „Duplikat prüfen“ klicken."
+        );
+        return;
+      }
+
+      // 저장 직전 현재 메모리도 다시 확인합니다.
       const duplicate = cards.find(card =>
-        card.id !== cardId && normalizeGerman(card.german) === normalized
+        card.id !== cardId &&
+        normalizeGerman(card.german) === normalized
       );
       if (duplicate) {
+        popupDuplicateState.passed = false;
+        const saveButton = doc.getElementById("popupSaveBtn");
+        const status = doc.getElementById("popupDuplicateStatus");
+        if (saveButton) saveButton.disabled = true;
+        if (status) {
+          status.className = "duplicate-status error";
+          status.textContent =
+            `Exaktes Duplikat gefunden: ${duplicate.german}`;
+        }
         cardWindow.alert(`Dieses Wort ist bereits vorhanden: ${duplicate.german}`);
         return;
       }
+
+      doc.getElementById("popupGerman").value = german;
 
       const payload = {
         german,
@@ -1565,10 +1932,25 @@
       } catch (error) {
         console.error(error);
         const message = String(error.message || error);
-        if (message.includes("german_vocab_cards_unique_word") || message.includes("duplicate key")) {
+        if (
+          error.code === "23505" ||
+          message.includes("german_vocab_cards_unique_word") ||
+          message.includes("duplicate key")
+        ) {
+          popupDuplicateState.passed = false;
+          const saveButton = doc.getElementById("popupSaveBtn");
+          const status = doc.getElementById("popupDuplicateStatus");
+          if (saveButton) saveButton.disabled = true;
+          if (status) {
+            status.className = "duplicate-status error";
+            status.textContent =
+              "Zwischen Prüfung und Speichern wurde ein Duplikat erkannt. Bitte erneut prüfen.";
+          }
           showToast("Dieses Wort ist bereits vorhanden.", true);
+          cardWindow.alert("Dieses Wort ist bereits vorhanden.");
         } else {
           showToast("Speichern fehlgeschlagen: " + message, true);
+          cardWindow.alert("Speichern fehlgeschlagen: " + message);
         }
       } finally {
         setBusy(false);
