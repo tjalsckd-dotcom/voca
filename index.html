@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mein deutscher Wortschatz · FINAL v11</title>
+  <title>Mein deutscher Wortschatz · FINAL v12</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -23,6 +23,7 @@
       --verb: #ea580c;
       --adjektiv: #7c3aed;
       --ausdruck: #ca8a04;
+      --quiz-viewport-height: 100dvh;
     }
     * { box-sizing: border-box; }
     body {
@@ -375,23 +376,31 @@
       z-index: 200;
       display: grid;
       place-items: center;
+      width: 100%;
+      height: var(--quiz-viewport-height, 100dvh);
+      overflow: hidden;
       padding: 18px;
       background: rgba(17, 24, 39, .58);
       backdrop-filter: blur(4px);
     }
     .quiz-shell {
       width: min(780px, 100%);
-      max-height: calc(100vh - 36px);
-      overflow: auto;
+      max-height: min(
+        calc(var(--quiz-viewport-height, 100dvh) - 36px),
+        calc(100dvh - 36px)
+      );
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       background: #fff;
       border: 1px solid rgba(255,255,255,.6);
       border-radius: 20px;
       box-shadow: 0 24px 70px rgba(0,0,0,.24);
     }
     .quiz-topbar {
-      position: sticky;
-      top: 0;
+      position: relative;
       z-index: 3;
+      flex: 0 0 auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -411,7 +420,16 @@
       font-size: 20px;
       line-height: 1;
     }
-    .quiz-view { padding: 24px; }
+    .quiz-view {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scroll-padding-top: 16px;
+      scroll-padding-bottom: 110px;
+      padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
+    }
     .quiz-setup-copy {
       margin: 0 0 20px;
       color: var(--muted);
@@ -664,11 +682,86 @@
     .quiz-result-card span { color: var(--muted); font-size: 12px; }
 
     @media (max-width: 620px) {
-      .quiz-overlay { padding: 0; }
-      .quiz-shell { max-height: 100vh; min-height: 100vh; border-radius: 0; }
-      .quiz-view { padding: 18px; }
+      .quiz-overlay {
+        place-items: stretch;
+        padding: 0;
+      }
+      .quiz-shell {
+        width: 100%;
+        height: var(--quiz-viewport-height, 100dvh);
+        min-height: 0;
+        max-height: var(--quiz-viewport-height, 100dvh);
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .quiz-topbar {
+        min-height: 56px;
+        padding:
+          calc(10px + env(safe-area-inset-top))
+          14px
+          10px;
+      }
+      .quiz-view {
+        padding: 16px 14px calc(90px + env(safe-area-inset-bottom));
+        scroll-padding-top: 12px;
+        scroll-padding-bottom: calc(130px + env(safe-area-inset-bottom));
+      }
       .quiz-settings-grid, .quiz-options { grid-template-columns: 1fr; }
       .quiz-stat-grid, .quiz-result-summary { grid-template-columns: 1fr 1fr; }
+      .quiz-progress-track { margin-bottom: 16px; }
+      .quiz-prompt {
+        margin: 14px 0 18px;
+        font-size: clamp(25px, 8vw, 36px);
+      }
+      .quiz-option {
+        min-height: 54px;
+        padding: 11px 12px;
+        touch-action: manipulation;
+      }
+      .quiz-feedback {
+        margin-top: 14px;
+        padding: 13px;
+      }
+      .quiz-rewrite-task {
+        padding: 12px;
+      }
+      .quiz-rewrite-task textarea,
+      .quiz-settings-grid select {
+        font-size: 16px;
+      }
+      .quiz-rewrite-task textarea {
+        min-height: 92px;
+        max-height: 28vh;
+      }
+      .quiz-rewrite-actions {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        margin: 10px -4px -4px;
+        padding: 10px 4px calc(4px + env(safe-area-inset-bottom));
+        background: linear-gradient(
+          to bottom,
+          rgba(255,247,237,0),
+          #fff7ed 22%
+        );
+      }
+      .quiz-rewrite-actions .btn,
+      .quiz-next-row .btn {
+        min-height: 44px;
+      }
+      .quiz-next-row {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        margin: 14px -4px -4px;
+        padding: 12px 4px calc(4px + env(safe-area-inset-bottom));
+        background: linear-gradient(
+          to bottom,
+          rgba(249,250,251,0),
+          #f9fafb 22%
+        );
+      }
     }
 
     @media (max-width: 980px) {
@@ -693,7 +786,7 @@
       <div class="brand-mark">DE</div>
       <div>
         <h1>Mein deutscher Wortschatz</h1>
-        <small>Supabase · FINAL v11</small>
+        <small>Supabase · FINAL v12</small>
       </div>
     </div>
     <div class="top-actions">
@@ -2259,6 +2352,68 @@
       }
     }
 
+    function isMobileQuizLayout() {
+      return window.matchMedia("(max-width: 620px)").matches ||
+        (navigator.maxTouchPoints || 0) > 0;
+    }
+
+    function updateQuizViewportHeight() {
+      const height = window.visualViewport?.height || window.innerHeight;
+      if (!Number.isFinite(height) || height <= 0) return;
+
+      document.documentElement.style.setProperty(
+        "--quiz-viewport-height",
+        `${Math.round(height)}px`
+      );
+    }
+
+    function getVisibleQuizView() {
+      return ["quizSetupView", "quizQuestionView", "quizResultView"]
+        .map(id => $(id))
+        .find(view => view && !view.classList.contains("hidden")) || null;
+    }
+
+    function scrollQuizToTop() {
+      const view = getVisibleQuizView();
+      if (view) view.scrollTop = 0;
+    }
+
+    function keepQuizElementVisible(element, block = "center") {
+      if (!element || $("quizOverlay").classList.contains("hidden")) return;
+
+      const run = () => {
+        try {
+          element.scrollIntoView({
+            behavior: "smooth",
+            block,
+            inline: "nearest"
+          });
+        } catch {
+          element.scrollIntoView();
+        }
+      };
+
+      requestAnimationFrame(() => {
+        run();
+        setTimeout(run, 140);
+      });
+    }
+
+    function handleQuizVisualViewportChange() {
+      updateQuizViewportHeight();
+
+      if ($("quizOverlay").classList.contains("hidden")) return;
+
+      const active = document.activeElement;
+      if (
+        active &&
+        $("quizOverlay").contains(active) &&
+        /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(active.tagName)
+      ) {
+        setTimeout(() => keepQuizElementVisible(active, "center"), 40);
+      }
+    }
+
     function renderQuizSetupStats() {
       const mode = $("quizDirectionSelect").value;
       const counts = quizAvailable ? quizCounts(mode) : { due: 0, fresh: 0, usable: 0 };
@@ -2283,9 +2438,11 @@
     }
 
     async function openQuizSetup() {
+      updateQuizViewportHeight();
       $("quizOverlay").classList.remove("hidden");
       document.body.style.overflow = "hidden";
       showQuizView("setup");
+      requestAnimationFrame(scrollQuizToTop);
 
       if (!quizAvailable) {
         $("quizSetupMessage").className = "quiz-note";
@@ -2310,6 +2467,7 @@
 
       $("quizOverlay").classList.add("hidden");
       document.body.style.overflow = "";
+      document.documentElement.style.setProperty("--quiz-viewport-height", "100dvh");
       quizSession = null;
       currentQuizQuestion = null;
       showQuizView("setup");
@@ -2319,6 +2477,7 @@
       $("quizSetupView").classList.toggle("hidden", view !== "setup");
       $("quizQuestionView").classList.toggle("hidden", view !== "question");
       $("quizResultView").classList.toggle("hidden", view !== "result");
+      requestAnimationFrame(scrollQuizToTop);
     }
 
     function directionName(direction) {
@@ -2609,6 +2768,7 @@
       });
 
       updateQuizProgressDisplay();
+      requestAnimationFrame(scrollQuizToTop);
     }
 
     function updateQuizProgressDisplay() {
@@ -2817,7 +2977,10 @@
         quizExampleSaveBusy = false;
         $("quizNextBtn").disabled = isExampleRewritePending() || quizBusy;
         if (!isExampleRewritePending() && !quizBusy) {
-          $("quizNextBtn").focus();
+          if (!isMobileQuizLayout()) $("quizNextBtn").focus();
+          keepQuizElementVisible($("quizNextBtn"), "end");
+        } else if (isExampleRewritePending()) {
+          keepQuizElementVisible($("quizRewriteStatus"), "center");
         }
       }
     }
@@ -2874,7 +3037,17 @@
       $("quizNextBtn").disabled = true;
 
       if (requiresExampleRewrite) {
-        setTimeout(() => $("quizNewExampleDe").focus(), 0);
+        setTimeout(() => {
+          keepQuizElementVisible($("quizRewriteTask"), "start");
+
+          // 모바일에서는 자동 키보드 호출을 피합니다.
+          // 사용자가 입력칸을 탭하면 Visual Viewport에 맞춰 다시 스크롤됩니다.
+          if (!isMobileQuizLayout()) {
+            $("quizNewExampleDe").focus();
+          }
+        }, 60);
+      } else {
+        setTimeout(() => keepQuizElementVisible($("quizFeedback"), "start"), 40);
       }
 
       if (currentQuizQuestion.isSessionRetry) {
@@ -2940,6 +3113,12 @@
     $("quizBeginBtn").addEventListener("click", startQuiz);
     $("quizSaveExampleBtn").addEventListener("click", saveQuizExampleReplacement);
     [$("quizNewExampleDe"), $("quizNewExampleEs")].forEach(input => {
+      input.addEventListener("focus", () => {
+        updateQuizViewportHeight();
+        setTimeout(() => keepQuizElementVisible(input, "center"), 80);
+        setTimeout(() => keepQuizElementVisible(input, "center"), 260);
+      });
+
       input.addEventListener("input", () => {
         if (
           !currentQuizQuestion?.requiresExampleRewrite ||
@@ -3000,6 +3179,32 @@
         answerQuizQuestion(optionIndex);
       }
     });
+    updateQuizViewportHeight();
+    window.addEventListener("resize", handleQuizVisualViewportChange);
+    window.addEventListener("orientationchange", () => {
+      setTimeout(handleQuizVisualViewportChange, 120);
+    });
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener(
+        "resize",
+        handleQuizVisualViewportChange
+      );
+      window.visualViewport.addEventListener(
+        "scroll",
+        handleQuizVisualViewportChange
+      );
+    }
+
+    $("quizOverlay").addEventListener("focusin", event => {
+      if (
+        event.target.matches("input, textarea, select, button") &&
+        isMobileQuizLayout()
+      ) {
+        setTimeout(() => keepQuizElementVisible(event.target, "center"), 80);
+      }
+    });
+
     $("searchInput").addEventListener("input", event => {
       searchTerm = event.target.value.trim().toLowerCase();
       renderList();
