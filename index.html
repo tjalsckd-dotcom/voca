@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mein deutscher Wortschatz · FINAL v12</title>
+  <title>Mein deutscher Wortschatz · FINAL v13</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -786,7 +786,7 @@
       <div class="brand-mark">DE</div>
       <div>
         <h1>Mein deutscher Wortschatz</h1>
-        <small>Supabase · FINAL v12</small>
+        <small>Supabase · FINAL v13</small>
       </div>
     </div>
     <div class="top-actions">
@@ -894,7 +894,7 @@
         </div>
 
         <div id="quizSetupMessage" class="quiz-note">
-          Bei einer falschen Antwort schreibst du ein neues deutsches Beispiel mit spanischer Übersetzung. Danach wird die Frage zusätzlich wiederholt.
+          Fällige Wiederholungen kommen zuerst. Freie Plätze werden mit neuen Lernrichtungen gefüllt; noch nicht fällige Karten werden nicht vorgezogen. Bei einer falschen Antwort schreibst du ein neues deutsches Beispiel mit spanischer Übersetzung.
         </div>
 
         <div class="quiz-start-actions">
@@ -2535,42 +2535,91 @@
       return weighted.at(-1).item;
     }
 
-    function chooseRegularQuizItem() {
-      const now = new Date();
-      let candidates = quizSession.items.filter(item =>
-        !quizSession.usedProgressIds.has(item.progress.id)
+    function preferredFreshDirection() {
+      if (!quizSession || quizSession.mode !== "mixed") {
+        return quizSession?.mode === "es_to_de" ? "es_to_de" : "de_to_es";
+      }
+
+      const esCount = quizSession.directionCounts.es_to_de;
+      const deCount = quizSession.directionCounts.de_to_es;
+      const totalAfterNext = esCount + deCount + 1;
+
+      // Gemischt 목표: Spanisch → Deutsch 약 60 %, Deutsch → Spanisch 약 40 %.
+      const targetEsAfterNext = Math.ceil(totalAfterNext * 0.60);
+      return esCount < targetEsAfterNext ? "es_to_de" : "de_to_es";
+    }
+
+    function chooseFreshQuizItem(freshItems) {
+      if (!freshItems.length) return null;
+
+      let pool = freshItems;
+
+      if (quizSession.mode === "mixed") {
+        const preferredDirection = preferredFreshDirection();
+        const directionalPool = freshItems.filter(
+          item => item.progress.direction === preferredDirection
+        );
+        if (directionalPool.length) pool = directionalPool;
+      }
+
+      // 신규 문제는 학습 이력이 없으므로 좁은 상위 후보군을 만들지 않고
+      // 전체 신규 풀에서 고르게 무작위 선택합니다.
+      return pool[Math.floor(Math.random() * pool.length)] || null;
+    }
+
+    function chooseDueQuizItem(dueItems, now) {
+      if (!dueItems.length) return null;
+
+      const ranked = dueItems
+        .map(item => ({ item, score: selectionScore(item, now) }))
+        .sort((a, b) => b.score - a.score);
+
+      // 복습이 많이 밀렸을 때도 상위 8개에만 갇히지 않도록
+      // 긴급도가 높은 넓은 후보군 안에서 가중 추첨합니다.
+      const windowSize = Math.min(
+        ranked.length,
+        Math.max(
+          12,
+          Math.min(48, Math.ceil(Math.sqrt(ranked.length) * 4))
+        )
       );
 
-      const recentIds = new Set(quizSession.recentCardIds.slice(-5));
-      const withoutRecent = candidates.filter(item => !recentIds.has(item.card.id));
-      if (withoutRecent.length) candidates = withoutRecent;
+      return weightedPick(ranked.slice(0, windowSize));
+    }
+
+    function chooseRegularQuizItem() {
+      const now = new Date();
+
+      // 같은 단어는 한 세션의 정규 문제에서 최대 1번만 출제합니다.
+      // 반대 방향은 다음 세션에서 학습하고, 오답 재시험만 예외입니다.
+      const candidates = quizSession.items.filter(item =>
+        !quizSession.usedProgressIds.has(item.progress.id) &&
+        !quizSession.usedCardIds.has(item.card.id)
+      );
+
       if (!candidates.length) return null;
 
       const due = candidates.filter(item =>
         Number(item.progress.reviews || 0) > 0 &&
         new Date(item.progress.due_at).getTime() <= now.getTime()
       );
-      const fresh = candidates.filter(item => Number(item.progress.reviews || 0) === 0);
-      const future = candidates.filter(item =>
-        Number(item.progress.reviews || 0) > 0 &&
-        new Date(item.progress.due_at).getTime() > now.getTime()
-      );
 
-      let pool;
       if (due.length) {
-        pool = due;
-      } else if (fresh.length && quizSession.newUsed < quizSession.newLimit) {
-        pool = fresh;
-      } else {
-        pool = future.length ? future : fresh;
+        return chooseDueQuizItem(due, now);
       }
 
-      const ranked = pool
-        .map(item => ({ item, score: selectionScore(item, now) }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 8);
+      const fresh = candidates.filter(
+        item => Number(item.progress.reviews || 0) === 0
+      );
 
-      return weightedPick(ranked);
+      if (fresh.length) {
+        return chooseFreshQuizItem(fresh);
+      }
+
+      // 중요:
+      // 이미 학습했지만 아직 due_at이 오지 않은 문제는 세션을 채우기 위해
+      // 미리 꺼내지 않습니다. 이로써 간격 반복 스케줄을 보존합니다.
+      return null;
     }
 
     function answerValue(card, direction) {
@@ -2650,34 +2699,40 @@
 
     function chooseNextQuestion() {
       const nextPosition = quizSession.totalShown + 1;
-      const readyRetryIndex = quizSession.retryQueue.findIndex(entry => entry.showAt <= nextPosition);
+      const readyRetryIndex = quizSession.retryQueue.findIndex(
+        entry => entry.showAt <= nextPosition
+      );
 
       if (readyRetryIndex >= 0) {
         const [retry] = quizSession.retryQueue.splice(readyRetryIndex, 1);
         return buildQuizQuestion(retry.item, true);
       }
 
+      // 정규 문제 수를 채웠는데 재시험 간격이 아직 충분하지 않다면
+      // 즉시 반복하지 않고 이번 세션에서는 종료합니다.
       if (quizSession.primaryPresented >= quizSession.targetCount) {
-        if (quizSession.retryQueue.length) {
-          quizSession.retryQueue.sort((a, b) => a.showAt - b.showAt);
-          const retry = quizSession.retryQueue.shift();
-          return buildQuizQuestion(retry.item, true);
-        }
         return null;
       }
 
       for (let attempt = 0; attempt < 24; attempt++) {
         const item = chooseRegularQuizItem();
         if (!item) return null;
+
+        // 문제 구성에 실패한 동일 방향을 계속 다시 고르는 것을 방지합니다.
         quizSession.usedProgressIds.add(item.progress.id);
+
         const question = buildQuizQuestion(item, false);
         if (question) {
+          quizSession.usedCardIds.add(item.card.id);
           quizSession.primaryPresented += 1;
-          if (Number(item.progress.reviews || 0) === 0) quizSession.newUsed += 1;
+          if (Number(item.progress.reviews || 0) === 0) {
+            quizSession.newUsed += 1;
+          }
           quizSession.directionCounts[item.progress.direction] += 1;
           return question;
         }
       }
+
       return null;
     }
 
@@ -2688,22 +2743,41 @@
       }
 
       const mode = $("quizDirectionSelect").value;
-      const targetCount = Number($("quizCountSelect").value || 20);
+      const requestedCount = Number($("quizCountSelect").value || 20);
       const items = getQuizItems(mode);
+
       if (items.length < 4) {
         showToast("Nicht genügend eindeutige Quizfragen vorhanden.", true);
         return;
       }
 
-      const dueCount = items.filter(item =>
-        Number(item.progress.reviews || 0) > 0 &&
-        new Date(item.progress.due_at).getTime() <= Date.now()
-      ).length;
+      const now = Date.now();
+
+      // 오늘 정규 문제로 사용할 수 있는 것은:
+      // 1) 지금 복습할 차례인 문제
+      // 2) 아직 한 번도 풀지 않은 신규 문제
+      // due_at이 미래인 학습 문제는 의도적으로 제외합니다.
+      const eligibleToday = items.filter(item =>
+        Number(item.progress.reviews || 0) === 0 ||
+        new Date(item.progress.due_at).getTime() <= now
+      );
+
+      const uniqueEligibleCards = new Set(
+        eligibleToday.map(item => item.card.id)
+      );
+
+      if (!uniqueEligibleCards.size) {
+        showToast(
+          "Heute gibt es keine fälligen oder neuen Quizfragen.",
+          true
+        );
+        return;
+      }
 
       quizSession = {
         id: crypto.randomUUID(),
         mode,
-        targetCount: Math.min(targetCount, items.length),
+        targetCount: Math.min(requestedCount, uniqueEligibleCards.size),
         items,
         primaryPresented: 0,
         primaryAnswered: 0,
@@ -2713,9 +2787,9 @@
         retryShown: 0,
         retryCorrect: 0,
         newUsed: 0,
-        newLimit: dueCount >= targetCount ? 0 : Math.min(4, Math.floor(targetCount * 0.20)),
         directionCounts: { es_to_de: 0, de_to_es: 0 },
         usedProgressIds: new Set(),
+        usedCardIds: new Set(),
         recentCardIds: [],
         retryQueue: []
       };
@@ -3061,7 +3135,8 @@
           if (!quizSession.retryQueue.some(entry => entry.item.progress.id === currentQuizQuestion.item.progress.id)) {
             quizSession.retryQueue.push({
               item: currentQuizQuestion.item,
-              showAt: quizSession.totalShown + randomInteger(3, 5)
+              // 현재 문제 뒤에 다른 문제 3~5개를 둔 뒤 재시험
+              showAt: quizSession.totalShown + randomInteger(4, 6)
             });
           }
         }
